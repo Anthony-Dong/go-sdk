@@ -1,0 +1,182 @@
+package logs
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+	"strings"
+	"sync/atomic"
+)
+
+type Level uint8
+
+const (
+	LevelFatal Level = iota + 1
+	LevelError
+	LevelWarning
+	LevelInfo
+	LevelDebug
+)
+
+var (
+	levelMap = map[string]Level{
+		"fatal": LevelFatal,
+		"error": LevelError,
+		"warn":  LevelWarning,
+		"info":  LevelInfo,
+		"debug": LevelDebug,
+	}
+)
+
+type logger struct {
+	level  Level
+	log    atomic.Value
+	caller int
+}
+
+func (s *logger) getLogger() *log.Logger {
+	result, _ := s.log.Load().(*log.Logger)
+	return result
+}
+
+var (
+	defaultLogger = &logger{
+		level:  LevelDebug,
+		log:    atomic.Value{},
+		caller: 4,
+	}
+)
+
+func init() {
+	defaultLogger.log.Store(log.New(os.Stdout, "", log.Lshortfile|log.Ldate|log.Lmicroseconds))
+}
+
+func SetLevel(l Level) {
+	defaultLogger.level = l
+}
+func SetLevelString(s string) {
+	level, isExist := levelMap[strings.ToLower(s)]
+	if !isExist {
+		return
+	}
+	defaultLogger.level = level
+}
+func GetLevel() Level {
+	return defaultLogger.level
+}
+func IsLevel(level Level) bool {
+	return defaultLogger.level >= level
+}
+func SetLogger(l *log.Logger) {
+	defaultLogger.log.Store(l)
+}
+
+func Debugf(format string, v ...interface{}) {
+	defaultLogger.Debugf(format, v...)
+}
+func Infof(format string, v ...interface{}) {
+	defaultLogger.Infof(format, v...)
+}
+func Warnf(format string, v ...interface{}) {
+	defaultLogger.Warnf(format, v...)
+}
+func Errorf(format string, v ...interface{}) {
+	defaultLogger.Errorf(format, v...)
+}
+
+func Fatalf(format string, v ...interface{}) {
+	defaultLogger.Fatalf(format, v...)
+}
+
+func CtxDebugf(ctx context.Context, format string, v ...interface{}) {
+	defaultLogger.CtxDebugf(ctx, format, v...)
+}
+func CtxInfof(ctx context.Context, format string, v ...interface{}) {
+	defaultLogger.CtxInfof(ctx, format, v...)
+}
+
+func CtxErrorf(ctx context.Context, format string, v ...interface{}) {
+	defaultLogger.CtxErrorf(ctx, format, v...)
+}
+
+func (s *logger) Debugf(format string, v ...interface{}) {
+	s.output(LevelDebug, fmt.Sprintf(format, v...))
+}
+
+func (s *logger) Infof(format string, v ...interface{}) {
+	s.output(LevelInfo, fmt.Sprintf(format, v...))
+}
+
+func (s *logger) Warnf(format string, v ...interface{}) {
+	s.output(LevelWarning, fmt.Sprintf(format, v...))
+}
+
+func (s *logger) Errorf(format string, v ...interface{}) {
+	s.output(LevelError, fmt.Sprintf(format, v...))
+}
+
+func (s *logger) Fatalf(format string, v ...interface{}) {
+	s.output(LevelFatal, fmt.Sprintf(format, v...))
+	os.Exit(1)
+}
+
+func (s *logger) CtxDebugf(ctx context.Context, format string, v ...interface{}) {
+	s.output(LevelDebug, fmt.Sprintf(GetLogId(ctx)+" "+format, v...))
+}
+
+func (s *logger) CtxInfof(ctx context.Context, format string, v ...interface{}) {
+	s.output(LevelInfo, fmt.Sprintf(GetLogId(ctx)+" "+format, v...))
+}
+
+func (s *logger) CtxErrorf(ctx context.Context, format string, v ...interface{}) {
+	s.output(LevelError, fmt.Sprintf(GetLogId(ctx)+" "+format, v...))
+}
+
+func (s *logger) output(level Level, str string) {
+	if level > s.level {
+		return
+	}
+	formatStr := ""
+	switch level {
+	case LevelFatal:
+		formatStr = "\033[35m[FATAL]\033[0m " + str
+	case LevelError:
+		formatStr = "\033[31m[ERROR]\033[0m " + str
+	case LevelWarning:
+		formatStr = "\033[33m[WARN]\033[0m " + str
+	case LevelInfo:
+		formatStr = "\033[32m[INFO]\033[0m " + str
+	case LevelDebug:
+		formatStr = "\033[36m[DEBUG]\033[0m " + str
+	}
+	if l := s.getLogger(); l != nil {
+		_ = l.Output(s.caller, formatStr)
+	}
+}
+
+// log id
+
+type logId struct {
+}
+
+var (
+	traceId logId
+)
+
+func SetLogId(ctx context.Context, id string) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return context.WithValue(ctx, traceId, id)
+}
+func GetLogId(ctx context.Context) string {
+	if ctx == nil {
+		return "-"
+	}
+	result, _ := ctx.Value(traceId).(string)
+	if result == "" {
+		return "-"
+	}
+	return result
+}

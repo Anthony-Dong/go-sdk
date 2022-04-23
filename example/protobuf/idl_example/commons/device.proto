@@ -1,0 +1,9 @@
+syntax = "proto2";
+package im.commons;
+
+option go_package = "github.com/anthony-dong/go-tool/internal/example/protobuf/idl_example/pb_gen/commons";
+
+message DeviceInfo{
+  optional int64 Id = 1 [default = 0];
+  optional string Name = 2 [default = ''];
+}

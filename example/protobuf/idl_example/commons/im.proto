@@ -1,0 +1,14 @@
+syntax = "proto2";
+package im.commons;
+
+option go_package = "github.com/anthony-dong/go-tool/internal/example/protobuf/idl_example/pb_gen/commons";
+
+import "commons/device.proto";
+import "commons/user.proto";
+
+import "api.proto";
+
+message ImCommons {
+  optional im.commons.UserInfo UserInfo = 1 [(api.unbox) = true];
+  optional im.commons.DeviceInfo DeviceInfo = 2 [(api.unbox) = true];
+}

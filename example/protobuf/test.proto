@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+
+
+message TestData {
+  enum EnumType {
+    UnknownType = 0; // 必须以0开始！
+    Test1Type = 1;
+    Test2Type = 2;
+  }
+  message TestObj {
+    int64 t_int64 = 1;
+  }
+  string t_string = 1;
+  int64 t_int64 = 2;
+  bool t_bool = 3;
+  fixed64 t_fix64 = 4;
+  repeated int64 t_list_i64 = 5;
+  map<int64, string> t_map = 6;
+  EnumType t_enum = 7;
+  TestObj t_obj = 8 ;
+  repeated TestObj t_list_obj = 9 ;
+  map<string, TestData> t_map_obj = 10;
+  repeated string  t_list_string = 11;
+  optional google.protobuf.Any any = 12;
+}
+
+
+import "google/protobuf/any.proto";
+
+message TestAnyType {
+  optional google.protobuf.Any any = 1;
+}
+
+message Type1 {
+  string  value = 1;
+}
+
+message Type2 {
+  int64  value = 1;
+}
+
+message Type3 {
+  float value = 1;
+}
+
+message Type4 {
+  repeated string value = 1;
+}

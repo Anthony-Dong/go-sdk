@@ -1,0 +1,23 @@
+syntax = "proto2";
+
+package im.data;
+
+import "commons/im.proto";
+import "api.proto";
+
+option go_package = "github.com/anthony-dong/go-tool/internal/example/protobuf/idl_example/pb_gen/data";
+
+message ImMessageRequest {
+  optional int64 Cursor = 1 [default = 2, (api.source) = Query, (api.key) = 'cursor'];
+  optional im.commons.ImCommons ImCommons = 255 [(api.unbox) = true];
+}
+
+message ImMessageResponse{
+  optional int64 Cursor = 1; // 偏移量
+  repeated ImMessage Messages = 2;
+}
+
+message ImMessage{
+  optional int64 Id = 1;
+  optional string Content = 2;
+}

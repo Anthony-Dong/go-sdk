@@ -1,0 +1,10 @@
+syntax = "proto2";
+package im.commons;
+option go_package = "github.com/anthony-dong/go-tool/internal/example/protobuf/idl_example/pb_gen/commons";
+
+import "api.proto";
+
+message UserInfo {
+  optional int64 Id = 1 [(api.source) = Header, (api.key) = 'X-Biz-UserId'];
+  optional string Name = 2 [(api.source) = Header, (api.key) = 'X-Biz-UserName'];
+}

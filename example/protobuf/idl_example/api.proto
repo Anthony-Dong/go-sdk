@@ -1,0 +1,44 @@
+syntax = "proto2";
+package api;
+option go_package = "github.com/anthony-dong/go-tool/internal/example/protobuf/idl_example/pb_gen/api";
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.FileOptions{
+  optional string android_package = 1001;
+}
+
+extend google.protobuf.FieldOptions {
+  optional HttpSourceType source = 50101; // 来自于http 请求的哪个部位
+  optional string key = 50102; // http 请求的header 还是哪
+  optional bool unbox = 50103; // 是否平铺开结构体，除body外，默认处理第一层
+}
+
+enum HttpSourceType {
+  Query = 1;
+  Body = 2;
+  Header = 3;
+}
+
+extend google.protobuf.MethodOptions {
+  optional HttpMethodType method = 50201; // http method
+  optional string path = 50202; // http path
+}
+
+enum HttpMethodType{
+  GET = 1;
+  POST = 2;
+  PUT = 3;
+}
+
+// extend google.protobuf.EnumValueOptions {
+// }
+
+// extend google.protobuf.EnumOptions {
+// }
+
+// extend google.protobuf.MessageOptions {
+// }
+
+// extend google.protobuf.ServiceOptions {
+// }

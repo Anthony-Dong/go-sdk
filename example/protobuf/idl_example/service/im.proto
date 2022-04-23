@@ -1,0 +1,18 @@
+syntax = "proto2";
+
+package im.service;
+
+import "data/im.proto";
+import "api.proto";
+
+option go_package = "github.com/anthony-dong/go-tool/internal/example/protobuf/idl_example/pb_gen/service";
+
+// 自定义 安卓package!
+option (api.android_package) = "github.com.anthony_dong.go_tool.service";
+
+service ImService {
+  rpc GetMessage (im.data.ImMessageRequest) returns (im.data.ImMessageResponse){
+    option (api.method) = GET;
+    option (api.path) = '/api/v1/im/query';
+  };
+}

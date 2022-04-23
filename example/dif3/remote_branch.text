@@ -1,0 +1,28 @@
+ETCD: use bagent to access ETCD
+idl_api_gen
+==========================================
+
+IDL
+----------------------
+api IDL: [idl_api_gen v1.0.1](https://github.com/api/home/Detail/idl_api_gen/idl?version=1.0.1)
+
+Git Repo
+# diff
+------------------------
+[github.com/anthony-dong/api_idl_gen](https://github.com/anthony-dong/api_idl_gen)
+
+Installation
+----------------------
+```bash
+$ go get github.com/anthony-dong/api_idl_gen@v1.0.1
+```
+
+Usage
+----------------------
+Import packages:
+
+```go
+import (
+    "github.com/anthony-dong/api_idl_gen"
+)
+```
