@@ -20,7 +20,7 @@ export GOPRIVATE :=
 export GOFLAGS :=
 
 # PHONY
-.PHONY : all init build fmt build_cmd deploy test help
+.PHONY : all init build build_tool fmt build_cmd deploy test help
 
 all: fmt build_tool ## Let's go!
 
@@ -28,15 +28,16 @@ init: ## init project and init env
 	go mod tidy
 	@if [ ! -e $(shell go env GOPATH)/bin/golangci-lint ]; then curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1; fi
 
-build_tool: ## build this project
+build_tool: ## build gtool
 	@cd gtool; go build -v -ldflags "-s -w"  -o bin/gtool main.go; cd -; mkdir -p bin ;mv gtool/bin/gtool bin/gtool
+
+build: ## cross compiling
+	@cd gtool; sh -x build.sh; cd -
 
 fmt: ## fmt
 	@for elem in `find . -name '*.go' | grep -v 'internal/pkg'`;do goimports -w $$elem; gofmt -w $$elem; done
 
-deploy: fmt build_tool clear_tool
-
-clear_tool:
+deploy: fmt build_tool ## deploy this project
 	go run internal/cmd/clear.go
 
 test: ## go test
