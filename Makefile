@@ -29,16 +29,15 @@ init: ## init project and init env
 	@if [ ! -e $(shell go env GOPATH)/bin/golangci-lint ]; then curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1; fi
 
 build_tool: ## build this project
-	@cd cmd; go build -v -ldflags "-s -w"  -o bin/gotool main.go; cd -; mv cmd/bin/gotool bin/gotool
+	@cd gtool; go build -v -ldflags "-s -w"  -o bin/gtool main.go; cd -; mkdir -p bin ;mv gtool/bin/gtool bin/gtool
 
 fmt: ## fmt
 	@for elem in `find . -name '*.go' | grep -v 'internal/pkg'`;do goimports -w $$elem; gofmt -w $$elem; done
 
-deploy: build_cmd fmt test build
+deploy: fmt build_tool clear_tool
 
-build_cmd:
-	go run cmd/clear/main.go
-	go run cmd/new_example_readme/main.go
+clear_tool:
+	go run internal/cmd/clear.go
 
 test: ## go test
 	go test -count=1 ./...

@@ -27,7 +27,22 @@ var (
 		"info":  LevelInfo,
 		"debug": LevelDebug,
 	}
+	levelConvMap = map[Level]string{
+		LevelFatal:   "fatal",
+		LevelError:   "error",
+		LevelWarning: "warn",
+		LevelInfo:    "info",
+		LevelDebug:   "debug",
+	}
 )
+
+func (l Level) String() string {
+	level := levelConvMap[l]
+	if level != "" {
+		return level
+	}
+	return fmt.Sprintf("unknown")
+}
 
 type logger struct {
 	level  Level

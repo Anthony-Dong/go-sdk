@@ -3,7 +3,7 @@ module github.com/anthony-dong/go-sdk/example
 go 1.13
 
 require (
-	github.com/anthony-dong/go-sdk v0.0.0-00010101000000-000000000000
+	github.com/anthony-dong/go-sdk v0.0.0-20220423155222-042777f402c5
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/epiclabs-io/diff3 v0.0.0-20181217103619-05282cece609
 	github.com/gin-gonic/gin v1.7.7
@@ -20,5 +20,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
-
-replace github.com/anthony-dong/go-sdk => ../

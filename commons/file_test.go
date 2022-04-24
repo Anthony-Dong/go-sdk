@@ -31,3 +31,7 @@ func TestGetGoProjectDir(t *testing.T) {
 func TestGetCmdName(t *testing.T) {
 	t.Log(GetCmdName())
 }
+
+func TestCheckStdInFromPiped(t *testing.T) {
+	t.Log(CheckStdInFromPiped())
+}

@@ -133,12 +133,8 @@ func ToJsonString(v interface{}) string {
 }
 
 func ToPrettyJsonString(v interface{}) string {
-	result := ToJsonString(v)
-	prettyResult, err := FormatPrettyJson(UnsafeBytes(result))
-	if err != nil {
-		return result
-	}
-	return string(prettyResult)
+	result, _ := json.MarshalIndent(v, "", "  ")
+	return string(result)
 }
 
 func LinesToString(lines []string) string {

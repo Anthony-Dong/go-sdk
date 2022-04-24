@@ -1,6 +1,7 @@
 package codec
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
@@ -85,7 +86,7 @@ func testCodec(t *testing.T, codec Codec, in []byte) {
 		t.Fatal(err)
 	}
 	if err := codec.Decode(outBuf, inBuf); err != nil {
-		if err == NotSupportDecode {
+		if errors.Is(err, NotSupportDecode) {
 			t.Logf("not support Codec type: %T\n", codec)
 			return
 		}

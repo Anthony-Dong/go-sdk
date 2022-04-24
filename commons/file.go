@@ -165,3 +165,19 @@ func MustTmpDir(dir string, pattern string) string {
 		return dir
 	}
 }
+
+func UserHomeDir() string {
+	dir, err := os.UserHomeDir()
+	if err != nil {
+		return "/root"
+	}
+	return dir
+}
+
+func CheckStdInFromPiped() bool {
+	if stat, _ := os.Stdin.Stat(); (stat.Mode() & os.ModeCharDevice) == 0 {
+		return true
+	} else {
+		return false
+	}
+}
