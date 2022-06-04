@@ -16,6 +16,14 @@ cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download
 cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.1/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
 ```
 
+- windows 下载
+
+```shell
+# power shell 执行
+wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.1/gtool-windows-amd64.tgz
+# 记得配置下环境变量, 本人不会Windows的脚本，所以这里跳过！
+```
+
 2. 其他平台源码编译前往 [https://github.com/Anthony-Dong/go-sdk/releases](https://github.com/Anthony-Dong/go-sdk/releases) 下载sdk后，本地执行 `make build_tool` 即可！
 3. 介绍
 
@@ -24,14 +32,15 @@ cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download
 Usage: gtool [OPTIONS] COMMAND
 
 Commands:
-  codec       Encode and decode data
+  codec       The Encode and Decode data tool
+  gen         Auto compile thrift、protobuf IDL
   help        Help about any command
-  hexo        The hexo tool
-  json        Json tool
+  hexo        The Hexo tool
+  json        The Json tool
   upload      File upload tool
 
 Options:
-      --config-file string   set the config file (default "/Users/bytedance/.go-tool.yaml")
+      --config-file string   set the config file (default "/Users/bytedance/.gtool.yaml")
   -h, --help                 help for gtool
       --log-level string     set the log level in "fatal|error|warn|info|debug" (default "debug")
   -v, --version              version for gtool

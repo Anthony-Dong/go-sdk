@@ -34,7 +34,7 @@ build: ## cross compiling
 fmt: ## fmt
 	@for elem in `find . -name '*.go' | grep -v 'internal/pkg'`;do goimports -w $$elem; gofmt -w $$elem; done
 
-deploy: fmt test check build_tool ## deploy this project
+deploy: fmt test check build ## deploy this project
 
 check: ## check custom rule
 	go run internal/cmd/clear.go

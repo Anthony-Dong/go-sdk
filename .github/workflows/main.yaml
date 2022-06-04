@@ -13,6 +13,8 @@ jobs:
             goos: linux
           - goarch: amd64
             goos: darwin
+          - goarch: amd64
+            goos: windows
     steps:
       - uses: actions/checkout@v2
       - name: Set up Go
@@ -22,12 +24,12 @@ jobs:
       - name: Show Project ...
         run: ls -al
       - name: Compile
-        run: cd gtool; go build -v -ldflags "-s -w"  -o bin/gtool main.go; cd -; mkdir -p bin ;mv gtool/bin/gtool bin/gtool
+        run: cd gtool; go build -v -ldflags "-s -w" -o bin/gtool main.go; cd -; mkdir -p bin ;mv gtool/bin/gtool bin/gtool
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
       - name: Packaging...
-        run: tar czf gtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz bin/gtool
+        run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz bin/gtool
       - name: Uploading assets...
         if: ${{ !env.ACT }}
         id: upload-release-asset
