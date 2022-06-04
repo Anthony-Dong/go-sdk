@@ -12,7 +12,7 @@ import (
 )
 
 func NewCmd() (*cobra.Command, error) {
-	cmd := &cobra.Command{Use: "hexo", Short: "The hexo tool"}
+	cmd := &cobra.Command{Use: "hexo", Short: "The Hexo tool"}
 	if err := utils.AddCmd(cmd, newBuildCmd); err != nil {
 		return nil, err
 	}

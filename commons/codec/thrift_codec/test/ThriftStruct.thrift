@@ -101,4 +101,5 @@ struct TestResponse {
 
 service TestService {
     TestResponse Test (1: TestRequest req),
+    oneway void TestOneway (1: TestRequest req),
 }

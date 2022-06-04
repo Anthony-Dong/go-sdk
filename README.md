@@ -6,16 +6,23 @@
 
 1. 下载，可以前往 [https://github.com/Anthony-Dong/go-sdk/releases](https://github.com/Anthony-Dong/go-sdk/releases) 进行源码下载
 
-- mac 下载
+- mac 下载 or 升级
 
 ```shell
-cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.0/gtool-darwin-amd64.tgz ; tar -zxvf gtool-darwin-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
+cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.1/gtool-darwin-amd64.tgz ; tar -zxvf gtool-darwin-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
 ```
 
-- linux 下载
+- linux 下载 or 升级
 
 ```shell
-cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.0/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
+cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.1/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
+```
+
+- windows 下载
+
+```shell
+wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.1/gtool-windows-amd64.tgz
+# 记得配置下环境变量, 本人不会Windows的脚本，所以这里跳过！
 ```
 
 2. 文档: [gtool 文档](./gtool)
@@ -33,10 +40,11 @@ cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download
 Usage: gtool [OPTIONS] COMMAND
 
 Commands:
-  codec       Encode and decode data
+  codec       The Encode and Decode data tool
+  gen         Auto compile thrift、protobuf IDL
   help        Help about any command
-  hexo        The hexo tool
-  json        Json tool
+  hexo        The Hexo tool
+  json        The Json tool
   upload      File upload tool
 
 Options:
@@ -49,6 +57,10 @@ Use "gtool COMMAND --help" for more information about a command.
 
 To get more help with gtool, check out our guides at https://github.com/Anthony-Dong/go-sdk
 ```
+
+5. roadmap
+
+- 支持一键更新最新版本
 
 ## Example
 

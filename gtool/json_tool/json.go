@@ -24,7 +24,7 @@ import (
 func NewCmd() (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "json",
-		Short: "Json tool",
+		Short: "The Json tool",
 		Example: fmt.Sprintf(`  Exec: echo '{"k1":{"k2":"v2"}}' | %s json --path k1 --pretty
   Output: {
              "k2": "v2"

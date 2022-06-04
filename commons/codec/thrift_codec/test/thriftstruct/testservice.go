@@ -20,6 +20,9 @@ type TestService interface {
 	// Parameters:
 	//  - Req
 	Test(req *TestRequest) (r *TestResponse, err error)
+	// Parameters:
+	//  - Req
+	TestOneway(req *TestRequest) (err error)
 }
 
 type TestServiceClient struct {
@@ -116,6 +119,37 @@ func (p *TestServiceClient) recvTest() (value *TestResponse, err error) {
 	return
 }
 
+// Parameters:
+//  - Req
+func (p *TestServiceClient) TestOneway(req *TestRequest) (err error) {
+	if err = p.sendTestOneway(req); err != nil {
+		return
+	}
+	return
+}
+
+func (p *TestServiceClient) sendTestOneway(req *TestRequest) (err error) {
+	oprot := p.OutputProtocol
+	if oprot == nil {
+		oprot = p.ProtocolFactory.GetProtocol(p.Transport)
+		p.OutputProtocol = oprot
+	}
+	p.SeqId++
+	if err = oprot.WriteMessageBegin("TestOneway", thrift.ONEWAY, p.SeqId); err != nil {
+		return
+	}
+	args := TestOnewayArgs{
+		Req: req,
+	}
+	if err = args.Write(oprot); err != nil {
+		return
+	}
+	if err = oprot.WriteMessageEnd(); err != nil {
+		return
+	}
+	return oprot.Flush(context.Background())
+}
+
 type TestServiceProcessor struct {
 	processorMap map[string]thrift.TProcessorFunction
 	handler      TestService
@@ -138,6 +172,7 @@ func NewTestServiceProcessor(handler TestService) *TestServiceProcessor {
 
 	self44 := &TestServiceProcessor{handler: handler, processorMap: make(map[string]thrift.TProcessorFunction)}
 	self44.processorMap["Test"] = &testServiceProcessorTest{handler: handler}
+	self44.processorMap["TestOneway"] = &testServiceProcessorTestOneway{handler: handler}
 	return self44
 }
 
@@ -206,6 +241,25 @@ func (p *testServiceProcessorTest) Process(ctx context.Context, seqId int32, ipr
 		return
 	}
 	return true, err
+}
+
+type testServiceProcessorTestOneway struct {
+	handler TestService
+}
+
+func (p *testServiceProcessorTestOneway) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	args := TestOnewayArgs{}
+	if err = args.Read(iprot); err != nil {
+		iprot.ReadMessageEnd()
+		return false, err
+	}
+
+	iprot.ReadMessageEnd()
+	var err2 error
+	if err2 = p.handler.TestOneway(args.Req); err2 != nil {
+		return true, err2
+	}
+	return true, nil
 }
 
 // HELPER FUNCTIONS AND STRUCTURES
@@ -402,4 +456,100 @@ func (p *TestResult) String() string {
 		return "<nil>"
 	}
 	return fmt.Sprintf("TestResult(%+v)", *p)
+}
+
+type TestOnewayArgs struct {
+	Req *TestRequest `thrift:"req,1" json:"req"`
+}
+
+func NewTestOnewayArgs() *TestOnewayArgs {
+	return &TestOnewayArgs{}
+}
+
+var TestOnewayArgs_Req_DEFAULT *TestRequest
+
+func (p *TestOnewayArgs) GetReq() *TestRequest {
+	if !p.IsSetReq() {
+		return TestOnewayArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+func (p *TestOnewayArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *TestOnewayArgs) Read(iprot thrift.TProtocol) error {
+	if _, err := iprot.ReadStructBegin(); err != nil {
+		return fmt.Errorf("%T read error: %s", p, err)
+	}
+	for {
+		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+		if err != nil {
+			return fmt.Errorf("%T field %d read error: %s", p, fieldId, err)
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+		switch fieldId {
+		case 1:
+			if err := p.ReadField1(iprot); err != nil {
+				return err
+			}
+		default:
+			if err := iprot.Skip(fieldTypeId); err != nil {
+				return err
+			}
+		}
+		if err := iprot.ReadFieldEnd(); err != nil {
+			return err
+		}
+	}
+	if err := iprot.ReadStructEnd(); err != nil {
+		return fmt.Errorf("%T read struct end error: %s", p, err)
+	}
+	return nil
+}
+
+func (p *TestOnewayArgs) ReadField1(iprot thrift.TProtocol) error {
+	p.Req = &TestRequest{}
+	if err := p.Req.Read(iprot); err != nil {
+		return fmt.Errorf("%T error reading struct: %s", p.Req, err)
+	}
+	return nil
+}
+
+func (p *TestOnewayArgs) Write(oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin("TestOneway_args"); err != nil {
+		return fmt.Errorf("%T write struct begin error: %s", p, err)
+	}
+	if err := p.writeField1(oprot); err != nil {
+		return err
+	}
+	if err := oprot.WriteFieldStop(); err != nil {
+		return fmt.Errorf("write field stop error: %s", err)
+	}
+	if err := oprot.WriteStructEnd(); err != nil {
+		return fmt.Errorf("write struct stop error: %s", err)
+	}
+	return nil
+}
+
+func (p *TestOnewayArgs) writeField1(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("req", thrift.STRUCT, 1); err != nil {
+		return fmt.Errorf("%T write field begin error 1:req: %s", p, err)
+	}
+	if err := p.Req.Write(oprot); err != nil {
+		return fmt.Errorf("%T error writing struct: %s", p.Req, err)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return fmt.Errorf("%T write field end error 1:req: %s", p, err)
+	}
+	return err
+}
+
+func (p *TestOnewayArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("TestOnewayArgs(%+v)", *p)
 }

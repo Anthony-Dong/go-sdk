@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 
+	"github.com/anthony-dong/go-sdk/gtool/gen"
+
 	"github.com/anthony-dong/go-sdk/commons/logs"
 	"github.com/anthony-dong/go-sdk/gtool/config"
 
@@ -15,7 +17,7 @@ import (
 )
 
 const (
-	version = "v1.0.0"
+	version = "v1.0.1"
 )
 
 func main() {
@@ -63,6 +65,9 @@ func newRootCmd() (*cobra.Command, error) {
 		return nil, err
 	}
 	if err := utils.AddCmd(rootCmd, upload.NewCmd); err != nil {
+		return nil, err
+	}
+	if err := utils.AddCmd(rootCmd, gen.NewCmd); err != nil {
 		return nil, err
 	}
 	return rootCmd, nil

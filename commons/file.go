@@ -174,6 +174,7 @@ func UserHomeDir() string {
 	return dir
 }
 
+// CheckStdInFromPiped 检测标准输入是否来自于管道符
 func CheckStdInFromPiped() bool {
 	if stat, _ := os.Stdin.Stat(); (stat.Mode() & os.ModeCharDevice) == 0 {
 		return true

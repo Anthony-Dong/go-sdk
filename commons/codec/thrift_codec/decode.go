@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/anthony-dong/go-sdk/commons/logs"
+
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/apache/thrift/lib/go/thrift"
 )
@@ -65,12 +67,6 @@ func DecodeMessage(ctx context.Context, iprot thrift.TProtocol) (*ThriftMessage,
 		MessageType: ThriftTMessageType(messageType),
 	}
 	switch messageType {
-	case thrift.CALL:
-		decodeStruct, err := DecodeStruct(ctx, iprot)
-		if err != nil {
-			return nil, err
-		}
-		result.Payload = decodeStruct
 	case thrift.EXCEPTION:
 		exception := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
 		if err := exception.Read(iprot); err != nil {
@@ -81,37 +77,14 @@ func DecodeMessage(ctx context.Context, iprot thrift.TProtocol) (*ThriftMessage,
 			Message:   exception.Error(),
 			TypeId:    exception.TypeId(),
 		}
-	case thrift.ONEWAY:
-
-	case thrift.REPLY:
-		if _, err := iprot.ReadStructBegin(); err != nil {
+	case thrift.REPLY, thrift.CALL, thrift.ONEWAY:
+		decodeStruct, err := DecodeStruct(ctx, iprot)
+		if err != nil {
 			return nil, err
 		}
-		for {
-			_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
-			if err != nil {
-				return nil, err
-			}
-			if fieldTypeId == thrift.STOP {
-				break
-			}
-			switch fieldId {
-			case 0:
-				result.Payload, _ = DecodeStruct(ctx, iprot)
-			default:
-				if err := iprot.Skip(fieldTypeId); err != nil {
-					return nil, err
-				}
-			}
-			if err := iprot.ReadFieldEnd(); err != nil {
-				return nil, err
-			}
-		}
-		if err := iprot.ReadStructEnd(); err != nil {
-			return nil, err
-		}
+		result.Payload = decodeStruct
 	case thrift.INVALID_TMESSAGE_TYPE:
-		//logs.CtxInfo(ctx, "[DecodeRespMessage] not handler message type: %s, method_name: %s", messageType, name)
+		logs.CtxInfof(ctx, "[DecodeRespMessage] not handler message type: %s, method_name: %s", messageType, name)
 	}
 	if err := iprot.ReadMessageEnd(); err != nil {
 		return nil, err
@@ -236,7 +209,7 @@ func DecodeField(ctx context.Context, fieldType thrift.TType, iprot thrift.TProt
 	case thrift.STRUCT:
 		return DecodeStruct(ctx, iprot)
 	default:
-		//logs.CtxInfo(ctx, "[DecodeField] can not handler thrift.TType: %s", fieldType)
+		logs.CtxInfof(ctx, "[DecodeField] can not handler thrift.TType: %s", fieldType)
 		return nil, iprot.Skip(fieldType)
 	}
 }
@@ -263,7 +236,6 @@ func (t FieldOrderMap) MarshalJSON() ([]byte, error) {
 		result.WriteByte(':')
 		marshal, err := json.Marshal(t.data[v])
 		if err != nil {
-			fmt.Println(err)
 			return nil, err
 		}
 		result.Write(marshal)

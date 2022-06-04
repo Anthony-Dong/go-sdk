@@ -19,7 +19,7 @@ var (
 func NewCmd() (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "codec",
-		Short: "Encode and decode data",
+		Short: "The Encode and Decode data tool",
 	}
 	cmd.PersistentFlags().BoolVar(&isDecode, "decode", false, "decode content data")
 	if err := utils.AddCmd(cmd, newThriftCodecCmd); err != nil {
