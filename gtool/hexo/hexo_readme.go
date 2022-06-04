@@ -35,7 +35,7 @@ type readmeFileInfo struct {
 }
 
 func newReadmeCmd() (*cobra.Command, error) {
-	cmd := cobra.Command{Use: "readme", Short: "Gen a readme file"}
+	cmd := cobra.Command{Use: "readme", Short: "Gen a readme file for markdown project"}
 	var (
 		cfg = markdownCommand{}
 	)

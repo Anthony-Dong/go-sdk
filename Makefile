@@ -10,9 +10,6 @@
 # dir
 PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
-# go test
-GO_TEST_PKG_NAME := $(shell go list ./...)
-
 # go env
 export GO111MODULE := on
 export GOPROXY := https://goproxy.cn,direct
