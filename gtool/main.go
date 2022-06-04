@@ -40,7 +40,7 @@ func newRootCmd() (*cobra.Command, error) {
 		Version:           version,
 		CompletionOptions: cobra.CompletionOptions{DisableDefaultCmd: true},
 		SilenceErrors:     true, // 屏蔽掉执行错误默认打印日志
-		//SilenceUsage:      true, // 屏蔽掉执行错误打印help
+		SilenceUsage:      true, // 屏蔽掉执行错误打印help
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if configFile != "" {
 				config.SetConfigFile(configFile)
