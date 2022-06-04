@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/anthony-dong/go-sdk/commons/bufutils"
+
 	"github.com/anthony-dong/go-sdk/commons/internal/prettyjson"
 	"github.com/anthony-dong/go-sdk/commons/internal/unsafe"
 	"github.com/google/uuid"
@@ -106,11 +108,12 @@ func NewString(elem byte, len int) string {
 	if len == 0 {
 		return ""
 	}
-	builder := strings.Builder{}
+	buffer := bufutils.NewBuffer()
+	defer bufutils.ResetBuffer(buffer)
 	for x := 0; x < len; x++ {
-		builder.WriteByte(elem)
+		buffer.WriteByte(elem)
 	}
-	return builder.String()
+	return buffer.String()
 }
 
 func FormatFloat(i float64, size int) string {
@@ -141,12 +144,16 @@ func LinesToString(lines []string) string {
 	if len(lines) == 0 {
 		return ""
 	}
-	builder := strings.Builder{}
-	for _, elem := range lines {
-		builder.WriteString(elem)
-		builder.WriteByte('\n')
+	buffer := bufutils.NewBuffer()
+	defer bufutils.ResetBuffer(buffer)
+	max := len(lines) - 1
+	for index, elem := range lines {
+		buffer.WriteString(elem)
+		if index != max {
+			buffer.WriteByte('\n')
+		}
 	}
-	return builder.String()
+	return buffer.String()
 }
 
 func SplitSliceString(slice []string, length int) [][]string {

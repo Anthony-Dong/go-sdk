@@ -4,3 +4,4 @@
 *.log
 /test
 /vendor
+/cover.out

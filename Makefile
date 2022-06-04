@@ -17,7 +17,7 @@ export GOPRIVATE :=
 export GOFLAGS :=
 
 # PHONY
-.PHONY : all init build build_tool fmt build_cmd deploy test help
+.PHONY : all init build build_tool fmt build_cmd check deploy test help release
 
 all: fmt build_tool ## Let's go!
 
@@ -34,11 +34,17 @@ build: ## cross compiling
 fmt: ## fmt
 	@for elem in `find . -name '*.go' | grep -v 'internal/pkg'`;do goimports -w $$elem; gofmt -w $$elem; done
 
-deploy: fmt build_tool ## deploy this project
+deploy: fmt test check build_tool ## deploy this project
+
+check: ## check custom rule
 	go run internal/cmd/clear.go
 
 test: ## go test
-	go test -count=1 ./...
+	go test -coverprofile cover.out -count=1 ./...
+	go tool cover -html=cover.out
+
+release: ## release new version
+	@for elem in `find . -name '*.md'`;do sed -i 's/v1.0.0/v1.0.1/g' $$elem ; done
 
 help: ## help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf " \033[36m%-20s\033[0m  %s\n", $$1, $$2}' $(MAKEFILE_LIST)

@@ -147,10 +147,10 @@ func (p *ProtocGen) Gen(ctx context.Context) (*ProtocGenResult, error) {
 	return &result, nil
 }
 
-//  NewPlugin file, cmd: /Users/bytedance/go/bin/protoc-gen-go
+//  NewPlugin file, cmd: /Users/fanhaodong/go/bin/protoc-gen-go
 // 解析后 plugin=go
-// --plugin=protoc-gen-go=/Users/bytedance/go/bin/protoc-gen-go \
-// --go_opt=Mapi/api.proto=code.byted.org/fanhaodong.516/tool/pb_gen/webcast.room.api/api/api \
+// --plugin=protoc-gen-go=/Users/fanhaodong/go/bin/protoc-gen-go \
+// --go_opt=Mapi/api.proto=code.test.org/fanhaodong.516/tool/pb_gen/webcast.room.api/api/api \
 // --go_out=/Users/bytedance/go/src
 func (p *ProtocGen) NewPlugin(files []string, cmd string) []string {
 	tag := strings.TrimPrefix(filepath.Base(cmd), "protoc-gen-")

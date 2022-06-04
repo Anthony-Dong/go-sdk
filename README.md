@@ -9,13 +9,13 @@
 - mac 下载
 
 ```shell
-cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.0/gtool-darwin-amd64.tgz ; tar -zxvf gtool-darwin-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
+cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.1/gtool-darwin-amd64.tgz ; tar -zxvf gtool-darwin-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
 ```
 
 - linux 下载
 
 ```shell
-cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.0/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
+cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.1/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
 ```
 
 2. 文档: [gtool 文档](./gtool)
