@@ -2,6 +2,14 @@
 
 这个是本人写的一个Go通用的SDK, 包含cli 和 common sdk!
 
+## Feature
+- [Codec](./commons/codec) PB/Thrift 以及常见的消息协议
+  - [PB Codec](./commons/codec/pb_codec)
+  - [Thrift Codec](./commons/codec/thrift_codec)
+- [Commons-Util](./commons): 常见的工具包
+- [Example](./example): 日常练习的代码
+- [CLI](./gtool): 命令行工具
+
 ## [Cli](./gtool)
 
 1. 下载，可以前往 [https://github.com/Anthony-Dong/go-sdk/releases](https://github.com/Anthony-Dong/go-sdk/releases) 进行源码下载

@@ -12,17 +12,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	isDecode bool
-)
-
 func NewCmd() (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "codec",
 		Short: "The Encode and Decode data tool",
 	}
-	cmd.PersistentFlags().BoolVar(&isDecode, "decode", false, "decode content data")
 	if err := utils.AddCmd(cmd, newThriftCodecCmd); err != nil {
+		return nil, err
+	}
+	if err := utils.AddCmd(cmd, newPBCodecCmd); err != nil {
 		return nil, err
 	}
 	cmd.AddCommand(newCodecCmd("gizp", codec.NewGzipCodec()))
@@ -36,15 +34,15 @@ func NewCmd() (*cobra.Command, error) {
 }
 
 var (
-	reader io.Reader = os.Stdin
-	writer io.Writer = os.Stdout
+	reader   io.Reader = os.Stdin
+	writer   io.Writer = os.Stdout
+	isDecode bool
 )
 
 func newCodecCmd(name string, codec codec.Codec) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   name,
 		Short: fmt.Sprintf("%s codec", name),
-		//Flags: codecFlags,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			if !commons.CheckStdInFromPiped() {
 				return cmd.Help()
@@ -61,4 +59,6 @@ func newCodecCmd(name string, codec codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
+	cmd.PersistentFlags().BoolVar(&isDecode, "decode", false, "decode content data")
+	return cmd
 }

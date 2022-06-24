@@ -1,0 +1,52 @@
+syntax = "proto2";
+import "google/protobuf/any.proto";
+
+message TestPB2Data {
+  enum EnumType {
+    UnknownType = 0; // 必须以0开始！
+    Test1Type = 1;
+    Test2Type = 2;
+  }
+  message TestPB2Obj {
+    optional int64 t_int64 = 1;
+  }
+  optional string t_string = 1;
+  optional int64 t_int64 = 2;
+  required bool t_bool = 3;
+  required fixed64 t_fix64 = 4;
+  repeated int64 t_list_i64 = 5[packed = true];
+  map<int64, string> t_map = 6;
+  optional EnumType t_enum = 7;
+  optional TestPB2Obj t_obj = 8 ;
+  repeated TestPB2Obj t_list_obj = 9 ;
+  map<string, TestPB2Data> t_map_obj = 10;
+  repeated string  t_list_string = 11;
+  optional google.protobuf.Any any = 12;
+  repeated group Result = 13 {
+    required string url = 2;
+    optional string title = 3;
+    repeated string snippets = 4;
+  }
+  optional double t_double = 14;
+  optional bytes t_bytes=15;
+}
+
+message TestAnyTypePB2 {
+  optional google.protobuf.Any any = 1;
+}
+
+message Type1PB2 {
+  optional string  value = 1;
+}
+
+message Type2PB2 {
+  optional int64  value = 1;
+}
+
+message Type3PB2 {
+  optional float value = 1;
+}
+
+message Type4PB2 {
+  repeated string value = 1;
+}
