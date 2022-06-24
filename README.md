@@ -3,9 +3,12 @@
 这个是本人写的一个Go通用的SDK, 包含cli 和 common sdk!
 
 ## Feature
-- Codec PB/Thrift 以及常见的消息协议
-- Commons-Util: 常见的工具包
-- Example: 日常练习的代码
+- [Codec](./commons/codec) PB/Thrift 以及常见的消息协议
+  - [PB Codec](./commons/codec/pb_codec)
+  - [Thrift Codec](./commons/codec/thrift_codec)
+- [Commons-Util](./commons): 常见的工具包
+- [Example](./example): 日常练习的代码
+- [CLI](./gtool): 命令行工具
 
 ## [Cli](./gtool)
 
