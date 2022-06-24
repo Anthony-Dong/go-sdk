@@ -22,6 +22,8 @@ message TestPB3Data {
   map<string, TestPB3Data> t_map_obj = 10;
   repeated string  t_list_string = 11;
   optional google.protobuf.Any any = 12;
+  optional double t_double = 13;
+  optional bytes t_bytes=14;
 }
 
 message TestAnyType {

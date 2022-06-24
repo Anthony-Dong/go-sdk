@@ -18,5 +18,5 @@ protoc: ## 编译上面的'test.proto'文件
     --go-grpc_opt=Mtest2.proto=github.com/anthony-dong/golib/commons/codec/pb_codec/test \
     --go-grpc_opt=Mtest3.proto=github.com/anthony-dong/golib/commons/codec/pb_codec/test \
     --go-grpc_out=${HOME}/go/src \
-    test2.proto \
-    test3.proto
+    test/test2.proto \
+    test/test3.proto

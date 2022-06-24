@@ -146,7 +146,6 @@ func marshalMessage(b []byte, pm proto.Message, deterministic bool) ([]byte, err
 	return append(b, bytes...), nil
 }
 
-
 // EncodeZigZag64 does zig-zag encoding to convert the given
 // signed 64-bit integer into a form that can be expressed
 // efficiently as a varint, even for negative values.

@@ -3,6 +3,7 @@ package pb_codec
 import (
 	"bytes"
 	"encoding/json"
+
 	"github.com/anthony-dong/go-sdk/commons"
 )
 
@@ -18,6 +19,11 @@ func (f *FieldOrderMap) GetFieldId(v int32) (interface{}, bool) {
 		}
 	}
 	return nil, false
+}
+
+func (f *FieldOrderMap) ContainsField(v int32) (isExist bool) {
+	_, isExist = f.GetFieldId(v)
+	return
 }
 
 func (f *FieldOrderMap) Size() int {

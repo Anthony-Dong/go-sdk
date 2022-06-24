@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/anthony-dong/go-sdk v0.0.0-20220423155222-042777f402c5
 	github.com/cenkalti/backoff v2.2.1+incompatible
+	github.com/creack/pty v1.1.18 // indirect
 	github.com/epiclabs-io/diff3 v0.0.0-20181217103619-05282cece609
 	github.com/gin-gonic/gin v1.7.7
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da

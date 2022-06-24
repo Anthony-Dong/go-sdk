@@ -63,9 +63,9 @@ To get more help with gtool, check out our guides at https://github.com/Anthony-
 
 #### 1. 介绍
 
-目前支持 `thrift`,`br`,`base64`,`gizp`,`snappy`,`url`,`md5`,`hex` 等多种消息解析，比较适合我们日常开发中，经常性的会解析各种数据！使用这个命令可以帮助你实现快速的转换！
+目前支持 `thrift`,`pb`,`br`,`base64`,`gizp`,`snappy`,`url`,`md5`,`hex` 等多种消息解析，比较适合我们日常开发中，经常性的会解析各种数据！使用这个命令可以帮助你实现快速的转换！
 
-例如我们将一个 thrift 的消息报文，是base64编码的，然后通过 base64 decode，然后通过 thrift encode，最后通过 json pretty 打印可以看到如下结果！
+例如我们将一个 thrift/pb 的消息报文，是base64编码的，然后通过 base64 decode，然后通过 thrift/pb decode，最后通过 json pretty 打印可以看到如下结果！
 
 ```shell
 ➜  echo "AAAAEYIhAQRUZXN0HBwWAhUCAAAA" | gtool codec base64 --decode | gtool codec thrift | gtool json pretty
@@ -83,13 +83,22 @@ To get more help with gtool, check out our guides at https://github.com/Anthony-
   "message_type": "call",
   "protocol": "FramedCompact"
 }
+
+➜  echo "CgVoZWxsbxCIBEIDCIgE" | gtool codec base64 --decode | gtool codec pb | jq            
+{
+  "1": "hello",
+  "2": 520,
+  "8": {
+    "1": 520
+  }
+}
 ```
 
 #### 2. 使用说明
 
 ```shell
-➜  gtool codec --help
-Name: Encode and decode data
+➜  gtool codec --help                                                                             
+Name: The Encode and Decode data tool
 
 Usage: gtool codec [OPTIONS] COMMAND
 
@@ -99,16 +108,16 @@ Commands:
   gizp        gizp codec
   hex         hex codec
   md5         md5 codec
+  pb          decode protobuf protocol
   snappy      snappy codec
   thrift      decode thrift protocol
   url         url codec
 
 Options:
-      --decode   decode content data
-  -h, --help     help for codec
+  -h, --help   help for codec
 
 Global Options:
-      --config-file string   set the config file (default "/Users/bytedance/.go-tool.yaml")
+      --config-file string   set the config file (default "/Users/bytedance/.gtool.yaml")
       --log-level string     set the log level in "fatal|error|warn|info|debug" (default "debug")
 
 Use "gtool codec COMMAND --help" for more information about a command.

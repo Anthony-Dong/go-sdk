@@ -3,13 +3,15 @@ package pb_codec
 import (
 	"context"
 	"fmt"
-	"github.com/anthony-dong/go-sdk/commons/codec/pb_codec/codec"
-	"github.com/golang/protobuf/proto"
 	"io"
 	"math"
 	"net/http"
 	"sort"
 	"strings"
+
+	"github.com/anthony-dong/go-sdk/commons"
+	"github.com/anthony-dong/go-sdk/commons/codec/pb_codec/codec"
+	"github.com/golang/protobuf/proto"
 )
 
 func DecodeMessage(ctx context.Context, read *codec.Buffer) (data interface{}, err error) {
@@ -30,7 +32,7 @@ func DecodeMessage(ctx context.Context, read *codec.Buffer) (data interface{}, e
 		if value == nil { // 对于 end group, 返回的确实是空数据
 			continue
 		}
-		if result[fieldId] != nil {
+		if result[fieldId] != nil { // try merge list
 			resultType[fieldId] = wireType
 			list, isOk := result[fieldId].([]interface{})
 			if isOk {
@@ -43,6 +45,8 @@ func DecodeMessage(ctx context.Context, read *codec.Buffer) (data interface{}, e
 		}
 		result[fieldId] = value
 	}
+	tryHandlerMapType(result)
+
 	fieldIds := make([]int32, 0, len(result))
 	for id := range result {
 		fieldIds = append(fieldIds, id)
@@ -74,7 +78,7 @@ func decodeWireType(ctx context.Context, read *codec.Buffer, wireType int8) (dat
 		if err != nil {
 			return nil, err
 		}
-		if fixed64 > math.MaxInt32 {
+		if fixed64 > 4e18 { // 处理浮点数,比较 trick 的逻辑，因为浮点数往往一个很小的数，但是数据会很大，其次就是负数会很大
 			result := math.Float64frombits(fixed64)
 			return result, nil
 		}
@@ -145,4 +149,44 @@ func tryDecodeMessage(ctx context.Context, read []byte) (interface{}, error) {
 		return nil, err
 	}
 	return message, nil
+}
+
+func tryHandlerMapType(result map[int32]interface{}) {
+	// 特殊处理map
+	for fieldId, fieldValue := range result {
+		if listValue, isOK := fieldValue.([]interface{}); isOK {
+			var mapValue = make(map[string]interface{}, 0)
+			for _, elem := range listValue {
+				if elemValue, isOk := elem.(*FieldOrderMap); isOk {
+					if elemValue.Size() == 2 && elemValue.ContainsField(1) && elemValue.ContainsField(2) {
+						kv, _ := elemValue.GetFieldId(1) // key must is base type
+						vv, _ := elemValue.GetFieldId(2) // value can not be list & map
+						isBaseType := func(v interface{}) bool {
+							if v == nil {
+								return false
+							}
+							switch v.(type) {
+							case *FieldOrderMap, []interface{}, map[string]interface{}, []uint64, []byte:
+								return false
+							}
+							return true
+						}
+						isNotListAndMapType := func(v interface{}) bool {
+							switch v.(type) {
+							case []interface{}, map[string]interface{}, []uint64:
+								return false
+							}
+							return true
+						}
+						if isBaseType(kv) && isNotListAndMapType(vv) {
+							mapValue[commons.ToString(kv)] = vv
+						}
+					}
+				}
+			}
+			if len(mapValue) == len(listValue) {
+				result[fieldId] = mapValue
+			}
+		}
+	}
 }

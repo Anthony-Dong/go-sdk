@@ -12,7 +12,7 @@ import (
 	"github.com/apache/thrift/lib/go/thrift"
 )
 
-//  echo "AAAAEYIhAQRUZXN0HBwWAhUCAAAA" | bin/go-tool codec base64 --decode | bin/go-tool codec thrift | jq
+//  echo "AAAAEYIhAQRUZXN0HBwWAhUCAAAA" | bin/gtool codec base64 --decode | bin/gtool codec thrift | jq
 func newThriftCodecCmd() (*cobra.Command, error) {
 	messageType := "message"
 	cmd := &cobra.Command{
