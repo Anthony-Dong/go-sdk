@@ -30,6 +30,7 @@ func NewCmd() (*cobra.Command, error) {
 	cmd.AddCommand(newCodecCmd("md5", codec.NewCodec(codec.NewMd5Codec())))
 	cmd.AddCommand(newCodecCmd("url", codec.NewCodec(codec.NewUrlCodec())))
 	cmd.AddCommand(newCodecCmd("hex", codec.NewCodec(codec.NewHexCodec())))
+	cmd.AddCommand(newCodecCmd("hexdump", codec.NewCodec(codec.NewHexDumpCodec())))
 	return cmd, nil
 }
 

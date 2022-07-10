@@ -69,6 +69,14 @@ func Test_BytesCodec(t *testing.T) {
 		testBytesCodec(t, NewSnappyCodec(), in)
 		testCodec(t, NewCodec(NewSnappyCodec()), in)
 	})
+
+	t.Run("hexdump", func(t *testing.T) {
+		var (
+			in = []byte("hello world!!! 你好，世界！！！")
+		)
+		testBytesCodec(t, NewHexDumpCodec(), in)
+		testCodec(t, NewCodec(NewHexDumpCodec()), in)
+	})
 }
 
 func Test_Codec(t *testing.T) {

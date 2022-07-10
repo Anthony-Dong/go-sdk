@@ -15,6 +15,7 @@ export GO111MODULE := on
 export GOPROXY := https://goproxy.cn,direct
 export GOPRIVATE :=
 export GOFLAGS :=
+export CGO_ENABLED := 1
 
 # PHONY
 .PHONY : all init build build_tool fmt build_cmd check deploy test help release

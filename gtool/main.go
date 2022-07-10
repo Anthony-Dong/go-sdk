@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 
+	"github.com/anthony-dong/go-sdk/gtool/tcpdump"
+
 	"github.com/anthony-dong/go-sdk/gtool/gen"
 
 	"github.com/anthony-dong/go-sdk/commons/logs"
@@ -68,6 +70,9 @@ func newRootCmd() (*cobra.Command, error) {
 		return nil, err
 	}
 	if err := utils.AddCmd(rootCmd, gen.NewCmd); err != nil {
+		return nil, err
+	}
+	if err := utils.AddCmd(rootCmd, tcpdump.NewCmd); err != nil {
 		return nil, err
 	}
 	return rootCmd, nil
