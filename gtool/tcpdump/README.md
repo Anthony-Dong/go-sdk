@@ -2,13 +2,14 @@
 
 ## 背景 
 
-很多时候应用程序是无法暴露异常的，比如HTTP框架会有一些黑盒行为(404等)，或者你业务中没有记录日志，想要知道请求响应信息来定位问题！是的tcpdump可以抓取明文报文，但是阅读很麻烦，所以这里提供了一个解析tcpdump的工具，虽然[Wireshark](https://www.wireshark.org/)也可以做，但是还需要把抓包文件下载到本地，而且协议支持不一定满足定制化需求...！同时我也提供了Thrift解析，这主要是因为字节这边服务端主要是Thrift协议较多！
+很多时候应用程序是无法暴露异常的, 比如HTTP框架会有一些黑盒行为(404等), 或者你业务中没有记录日志, 想要知道请求响应信息来定位问题！是的tcpdump可以抓取明文报文, 但是阅读很麻烦, 所以这里提供了一个解析tcpdump的工具, 虽然[Wireshark](https://www.wireshark.org/)也可以做, 但是还需要把抓包文件下载到本地, 而且协议支持不一定满足定制化需求...！同时我也提供了Thrift解析, 这主要是因为字节这边服务端主要是Thrift协议较多！
 
 注意: 
 
-1. 解析[Thrift协议](https://github.com/Anthony-Dong/go-sdk/tree/master/commons/codec/thrift_codec)是我自己写的，HTTP使用的[FastHTTP](https://github.com/valyala/fasthttp), L2-L7协议解析是用的[Go-Packet](https://github.com/google/gopacket) , Go-Packet 需要开启`CGO_ENABLED=1`,由于交叉编译并不支持 CGO, 所以这里如果你想用，请下载源码本地构建，后面我会支持一下其他环境的！
-2. 解析失败会默认Dump Payload！
-3. 注意Linux 环境需要安装 `libpcap`, 例如我是Debian, 可以执行 `sudo apt-get install libpcap-dev`, 具体可以参考:[pcap.h header file problem](https://stackoverflow.com/questions/5779784/pcap-h-header-file-problem) ! mac 用户不需要！
+1. 解析[Thrift协议](https://github.com/Anthony-Dong/go-sdk/tree/master/commons/codec/thrift_codec)是我自己写的, HTTP使用的[FastHTTP](https://github.com/valyala/fasthttp), L2-L7协议解析是用的[Go-Packet](https://github.com/google/gopacket) 
+2. Go-[Packet](https://www.tcpdump.org/manpages/pcap.3pcap.html) 需要开启`CGO_ENABLED=1`, 由于交叉编译对于CGO支持并不友好, 所以这里如果你想用, 目前仅仅支持[release](https://github.com/Anthony-Dong/go-sdk/releases)中下载 linux & macos 版本, 其他环境请自己下载源码, 本地执行`make build_tool`进行构建! 
+3. 注意Linux环境需要安装 `libpcap`, 例如我是Debian, 可以执行 `sudo apt-get install libpcap-dev`, 具体可以参考:[pcap.h header file problem](https://stackoverflow.com/questions/5779784/pcap-h-header-file-problem) ! mac 用户不需要！
+4. 解析失败会默认Dump Payload！
 
 ## Feature
 
@@ -16,7 +17,7 @@
 - 支持解析HTTP包(HTTP/1.1 & HTTP/1.0)
 - 支持解析Thrift包
 
-注意: 解析包其实属于应用层(L7)，所以只抓取TCP的ACK&PSH包，工具会自动过滤！
+注意: 解析包其实属于应用层(L7), 所以只抓取TCP的ACK&PSH包, 工具会自动过滤！
 
 ```shell
 ➜  gtool tcpdump --help
@@ -40,7 +41,7 @@ To get more help with gtool, check out our guides at https://github.com/Anthony-
 ## Roadmap
 
 - 支持解析GRPC
-- 通过管道符解析(这样就可以实时转换了，这里不推荐自己写一个ebpf 接口工具进行解析，tcpdump比较通用)
+- 通过管道符解析(这样就可以实时转换了, 这里不推荐自己写一个ebpf 接口工具进行解析, tcpdump比较通用)
 
 ## HTTP
 
@@ -48,7 +49,7 @@ To get more help with gtool, check out our guides at https://github.com/Anthony-
 
 ```shell
 # -i eth0, 网卡自己查找, 一般外网通信的都是eth0(ip addr | ifconfig 都可以查)
-# tcp[13] == 0x18 表示抓取 ACK & PSH 的包，也可以不选择
+# tcp[13] == 0x18 表示抓取 ACK & PSH 的包, 也可以不选择
 # -ttt 表示format时间搓
 # -n 表示不解析ip
 # -X hexdump
@@ -87,9 +88,9 @@ Content-Length: 18
 
 ## Thrift
 
-这里直接看效果， 这里我删除掉了一些敏感信息！
+这里直接看效果, 这里我删除掉了一些敏感信息！
 
-> Thrift由于本身协议就复杂，包含Framed、TTHeader、Unframed协议，其中序列化包含 Binary和Compact！这里会自动解析协议！
+> Thrift由于本身协议就复杂, 包含Framed、TTHeader、Unframed协议, 其中序列化包含 Binary和Compact！这里会自动解析协议！
 
 ```shell
 ➜  go-sdk git:(master) ✗ bin/gtool tcpdump -t thrift -r gtool/tcpdump/test/thrift.pcap
