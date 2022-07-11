@@ -20,4 +20,12 @@ require (
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
 
-retract v1.1.2
+retract (
+	v1.2.0
+	v1.1.4
+	v1.1.3
+	v1.1.2
+	v1.1.2
+	v1.1.1
+	v1.0.1
+)
