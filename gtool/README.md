@@ -2,29 +2,28 @@
 
 本人自己平时写的一些 cli 命令，帮助快速开发！
 
-1. 下载，可以前往 [https://github.com/Anthony-Dong/go-sdk/releases](https://github.com/Anthony-Dong/go-sdk/releases) 进行源码下载，或者直接copy 下面命令下载
+1. 下载, 可以前往 [https://github.com/Anthony-Dong/go-sdk/releases](https://github.com/Anthony-Dong/go-sdk/releases) 进行下载! 
 
-- mac 下载
-
-```shell
-cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.2/gtool-darwin-amd64.tgz ; tar -zxvf gtool-darwin-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
-```
-
-- linux 下载
+- mac 下载 or 升级 (版本 macOS Big Sur 11)
 
 ```shell
-cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.2/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
+cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.2/gtool-darwin-amd64-v11.tgz ; tar -zxvf gtool-darwin-amd64-v11.tgz ; mv ./bin/gtool `go env GOPATH`/bin ; cd - ; gtool -v
 ```
 
-- windows 下载
+- mac 下载 or 升级 (版本 macOS Monterey 12)
 
 ```shell
-# power shell 执行
-wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.2/gtool-windows-amd64.tgz
-# 记得配置下环境变量, 本人不会Windows的脚本，所以这里跳过！
+cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.2/gtool-darwin-amd64-v12.tgz ; tar -zxvf gtool-darwin-amd64-v12.tgz ; mv ./bin/gtool `go env GOPATH`/bin ; cd - ; gtool -v
 ```
 
-2. 其他平台源码编译前往 [https://github.com/Anthony-Dong/go-sdk/releases](https://github.com/Anthony-Dong/go-sdk/releases) 下载sdk后，本地执行 `make build_tool` 即可！
+- linux 下载 or 升级
+
+```shell
+cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.2/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin ; cd - ; gtool -v
+```
+
+- windows or 其他环境, 下载源码自行构建, 执行 `make build_tool` 即可！
+
 3. 介绍
 
 ```bash
