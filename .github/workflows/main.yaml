@@ -47,7 +47,6 @@ jobs:
         include:
           - goarch: amd64
             goos: darwin
-            mac_version: v11
     steps:
       - uses: actions/checkout@v2
       - name: Set up Go
@@ -63,7 +62,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 1
       - name: Packaging...
-        run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}-{{ matrix.mac_version }}.tgz bin/gtool
+        run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v11.tgz bin/gtool
       - name: Uploading assets...
         if: ${{ !env.ACT }}
         id: upload-release-asset
@@ -72,8 +71,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./gtool-${{ matrix.goos }}-${{ matrix.goarch }}-{{ matrix.mac_version }}.tgz
-          asset_name: gtool-${{ matrix.goos }}-${{ matrix.goarch }}-{{ matrix.mac_version }}.tgz
+          asset_path: ./gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v11.tgz
+          asset_name: gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v11.tgz
           asset_content_type: application/gzip
   package_darwin_12:
     runs-on: macos-12
@@ -82,7 +81,6 @@ jobs:
         include:
           - goarch: amd64
             goos: darwin
-            mac_version: v12
     steps:
       - uses: actions/checkout@v2
       - name: Set up Go
@@ -98,7 +96,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 1
       - name: Packaging...
-        run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}-{{ matrix.mac_version }}.tgz bin/gtool
+        run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v12.tgz bin/gtool
       - name: Uploading assets...
         if: ${{ !env.ACT }}
         id: upload-release-asset
@@ -107,6 +105,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./gtool-${{ matrix.goos }}-${{ matrix.goarch }}-{{ matrix.mac_version }}.tgz
-          asset_name: gtool-${{ matrix.goos }}-${{ matrix.goarch }}-{{ matrix.mac_version }}.tgz
+          asset_path: ./gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v12.tgz
+          asset_name: gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v12.tgz
           asset_content_type: application/gzip
