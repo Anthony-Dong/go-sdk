@@ -4,17 +4,49 @@ on:
     types:
       - created
 jobs:
-  package:
+  package_linux:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
           - goarch: amd64
             goos: linux
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.13.15'
+      - name: Apt Install ...
+        run: sudo apt-get update; sudo apt-get install libpcap-dev # install libpcap for gopcap-sdk
+      - name: Show Project ...
+        run: ls -al
+      - name: Compile
+        run: cd gtool; go build -v -ldflags "-s -w" -o bin/gtool main.go; cd -; mkdir -p bin ;mv gtool/bin/gtool bin/gtool
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 1
+      - name: Packaging...
+        run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz bin/gtool
+      - name: Uploading assets...
+        if: ${{ !env.ACT }}
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./gtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz
+          asset_name: gtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz
+          asset_content_type: application/gzip
+  package_darwin:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
           - goarch: amd64
             goos: darwin
-          - goarch: amd64
-            goos: windows
     steps:
       - uses: actions/checkout@v2
       - name: Set up Go
@@ -28,6 +60,7 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 1
       - name: Packaging...
         run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz bin/gtool
       - name: Uploading assets...
