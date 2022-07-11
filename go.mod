@@ -9,7 +9,6 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/golang/protobuf v1.5.0
 	github.com/golang/snappy v0.0.4
-	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.3.0
 	github.com/gosimple/slug v1.12.0
 	github.com/kr/pretty v0.3.0 // indirect

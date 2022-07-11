@@ -8,6 +8,7 @@
 
 1. 解析[Thrift协议](https://github.com/Anthony-Dong/go-sdk/tree/master/commons/codec/thrift_codec)是我自己写的，HTTP使用的[FastHTTP](https://github.com/valyala/fasthttp), L2-L7协议解析是用的[Go-Packet](https://github.com/google/gopacket) , Go-Packet 需要开启`CGO_ENABLED=1`,由于交叉编译并不支持 CGO, 所以这里如果你想用，请下载源码本地构建，后面我会支持一下其他环境的！
 2. 解析失败会默认Dump Payload！
+3. 注意Linux 环境需要安装 `libpcap`, 例如我是Debian, 可以执行 `sudo apt-get install libpcap-dev`, 具体可以参考:[pcap.h header file problem](https://stackoverflow.com/questions/5779784/pcap-h-header-file-problem) ! mac 用户不需要！
 
 ## Feature
 

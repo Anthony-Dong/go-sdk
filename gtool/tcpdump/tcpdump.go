@@ -9,13 +9,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fatih/color"
+
 	"github.com/valyala/fasthttp"
 
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
 	"github.com/anthony-dong/go-sdk/commons/codec"
 	"github.com/anthony-dong/go-sdk/commons/codec/thrift_codec"
-	"github.com/anthony-dong/go-sdk/commons/logs"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -37,15 +38,18 @@ func NewCmd() (*cobra.Command, error) {
 		verbose  bool
 	)
 	cmd := &cobra.Command{
-		Use:   `tcpdump [-r file] [-t type]`,
+		Use:   `tcpdump [-r file] [-t type] [-v]`,
 		Short: `decode tcpdump file`,
+		Long:  `decode tcpdump file, help doc: https://github.com/Anthony-Dong/go-sdk/tree/master/gtool/tcpdump`,
+		Example: `  step1: tcpdump 'port 8080' -w ~/data/tcpdump.pcap
+  step2: gtool tcpdump -r ~/data/tcpdump.pcap -t http`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), filename, MsgType(msgType), verbose)
 		},
 	}
 	cmd.Flags().StringVarP(&filename, "file", "r", "", "Read tcpdump_xxx_file.pcap")
 	cmd.Flags().StringVarP(&msgType, "type", "t", "", "Decode message type: thrift|http")
-	cmd.Flags().BoolVar(&verbose, "verbose", false, "Turn on verbose mode")
+	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Turn on verbose mode")
 	if err := cmd.MarkFlagRequired("file"); err != nil {
 		return nil, err
 	}
@@ -60,7 +64,7 @@ func run(ctx context.Context, filename string, msgType MsgType, verbose bool) er
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("open %s file err", filename))
 	}
-	logs.CtxInfof(ctx, "[tcpdump] read file: %s, msg type: %s", filename, msgType)
+	consulInfo(ctx, "[tcpdump] read file: %s, msg type: %s", filename, msgType)
 	src, err := pcap.OpenOffline(filename)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("open %s file err", filename))
@@ -83,12 +87,12 @@ func run(ctx context.Context, filename string, msgType MsgType, verbose bool) er
 			continue
 		}
 		if _, err := wr.Write(tcpLayer.Payload); err != nil {
-			logs.CtxErrorf(ctx, "[tcpdump] write payload find err: %v", err)
+			consulError(ctx, "[tcpdump] write payload find err: %v", err)
 			fmt.Println(string(codec.NewHexDumpCodec().Encode(data.Data())))
 			continue
 		}
 		if err := handlerTCPData(ctx, reader, msgType); err != nil {
-			logs.CtxErrorf(ctx, "[tcpdump] read payload find err: %v", err)
+			consulError(ctx, "[tcpdump] read payload find err: %v", err)
 			fmt.Println(string(codec.NewHexDumpCodec().Encode(data.Data())))
 			continue
 		}
@@ -188,7 +192,11 @@ func handlerHttp(ctx context.Context, reader *bufio.Reader) error {
 				return errors.Wrap(err, `read http request continue content error`)
 			}
 		}
-		fmt.Print(copyR.String())
+		if data := copyR.String(); strings.HasSuffix(data, "\r\n") {
+			fmt.Print(data)
+		} else {
+			fmt.Println(data)
+		}
 		return nil
 	}
 	isResponse, err := isHttpResponse(ctx, reader)
@@ -200,7 +208,11 @@ func handlerHttp(ctx context.Context, reader *bufio.Reader) error {
 		if err := response.Read(reader); err != nil {
 			return errors.Wrap(err, `read http response content error`)
 		}
-		fmt.Print(copyR.String())
+		if data := copyR.String(); strings.HasSuffix(data, "\r\n") {
+			fmt.Print(data)
+		} else {
+			fmt.Println(data)
+		}
 		return nil
 	}
 	return errors.Errorf(`invalid http content`)
@@ -301,4 +313,12 @@ func debugPacket(packed gopacket.Packet, verbose bool) {
 		fmt.Printf("--- Layer %d ---\n%s", i, gopacket.LayerDump(l))
 	}
 	fmt.Printf("--- Layer 4 ---\n")
+}
+
+func consulError(ctx context.Context, format string, v ...interface{}) {
+	color.Red(format, v...)
+}
+
+func consulInfo(ctx context.Context, format string, v ...interface{}) {
+	color.Green(format, v...)
 }

@@ -7,20 +7,20 @@
 - mac 下载
 
 ```shell
-cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.1/gtool-darwin-amd64.tgz ; tar -zxvf gtool-darwin-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
+cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.2/gtool-darwin-amd64.tgz ; tar -zxvf gtool-darwin-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
 ```
 
 - linux 下载
 
 ```shell
-cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.1/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
+cd `$(mktemp -d)`; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.2/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin
 ```
 
 - windows 下载
 
 ```shell
 # power shell 执行
-wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.1/gtool-windows-amd64.tgz
+wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.2/gtool-windows-amd64.tgz
 # 记得配置下环境变量, 本人不会Windows的脚本，所以这里跳过！
 ```
 
