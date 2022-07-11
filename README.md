@@ -13,20 +13,10 @@
 
 ## [Cli](./gtool)
 
-1. 下载, 可以前往 [https://github.com/Anthony-Dong/go-sdk/releases](https://github.com/Anthony-Dong/go-sdk/releases) 进行下载!
+1. 下载
 
-- mac 下载 or 升级 (版本 macOS Big Sur 11)
-
-```shell
-cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.2/gtool-darwin-amd64-v11.tgz ; tar -zxvf gtool-darwin-amd64-v11.tgz ; mv ./bin/gtool `go env GOPATH`/bin ; cd - ; gtool -v
-```
-
-- mac 下载 or 升级 (版本 macOS Monterey 12)
-
-```shell
-cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.2/gtool-darwin-amd64-v12.tgz ; tar -zxvf gtool-darwin-amd64-v12.tgz ; mv ./bin/gtool `go env GOPATH`/bin ; cd - ; gtool -v
-```
-
+- 可以前往 [https://github.com/Anthony-Dong/go-sdk/releases](https://github.com/Anthony-Dong/go-sdk/releases) 进行下载
+- 本地有Go运行环境:  `GO111MODCE="on" CGO_ENABLED=1  go get -v github.com/anthony-dong/go-sdk/gtool` 进行下载 ！
 - linux 下载 or 升级
 
 ```shell
@@ -34,6 +24,7 @@ cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/releases/download/
 ```
 
 - windows or 其他环境, 下载源码自行构建, 执行 `make build_tool` 即可！
+- doc: https://pkg.go.dev/github.com/anthony-dong/go-sdk/gtool
 
 2. 文档: [gtool 文档](./gtool)
 3. 功能:
