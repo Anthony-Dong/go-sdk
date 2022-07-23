@@ -24,4 +24,10 @@ func Test_run(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+	t.Run("thrift_ttheader", func(t *testing.T) {
+		// thrift_ttheader
+		if err := run(context.Background(), readFile("thrift_ttheader.pcap"), Thrift, false); err != nil {
+			t.Fatal(err)
+		}
+	})
 }

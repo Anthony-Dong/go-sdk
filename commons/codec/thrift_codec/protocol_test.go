@@ -51,6 +51,7 @@ func TestData(t *testing.T) {
 
 func testProto(t *testing.T, protocol Protocol) {
 	buf := &bytes.Buffer{}
+	ctx := context.Background()
 	encoder := NewTProtocolEncoder(buf, protocol)
 	if headerProtocol, isOK := encoder.(*thrift.THeaderProtocol); isOK {
 		headerProtocol.SetWriteHeader("k1", "v1")
@@ -69,7 +70,7 @@ func testProto(t *testing.T, protocol Protocol) {
 	fmt.Println(hex.Dump(buf.Bytes()))
 
 	writeBuf := bufio.NewReader(buf)
-	readProtocol, err := GetProtocol(writeBuf)
+	readProtocol, err := GetProtocol(ctx, writeBuf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -220,4 +221,10 @@ func NewListData() *thriftstruct.ListData {
 		LStruct: []*thriftstruct.NormalStruct{NewNormalStruct()},
 		L_Ref:   []*thriftstruct.NormalStruct{NewNormalStruct()},
 	}
+}
+
+func TestInjectMateInfo(t *testing.T) {
+	ctx := context.Background()
+	ctx = InjectMateInfo(ctx)
+	t.Log(GetMateInfo(ctx))
 }

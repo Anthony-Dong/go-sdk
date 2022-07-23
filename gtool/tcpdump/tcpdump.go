@@ -73,8 +73,6 @@ func run(ctx context.Context, filename string, msgType MsgType, verbose bool) er
 	source.Lazy = false
 	source.NoCopy = true
 	source.DecodeStreamsAsDatagrams = true
-	wr := bufutils.NewBuffer()
-	reader := bufio.NewReader(wr)
 	for data := range source.Packets() {
 		debugPacket(data, verbose)
 		tcp := data.Layer(layers.LayerTypeTCP)
@@ -86,16 +84,21 @@ func run(ctx context.Context, filename string, msgType MsgType, verbose bool) er
 		if !(tcpLayer.ACK && tcpLayer.PSH) { // 仅抓取 PSH的包(因为应用层只会使用PSH+ACK传输数据包)
 			continue
 		}
+		wr := bufutils.NewBuffer()
+		reader := bufio.NewReader(wr)
 		if _, err := wr.Write(tcpLayer.Payload); err != nil {
 			consulError(ctx, "[tcpdump] write payload find err: %v", err)
-			fmt.Println(string(codec.NewHexDumpCodec().Encode(data.Data())))
+			fmt.Println(string(codec.NewHexDumpCodec().Encode(tcpLayer.Payload)))
+			bufutils.ResetBuffer(wr)
 			continue
 		}
 		if err := handlerTCPData(ctx, reader, msgType); err != nil {
+			bufutils.ResetBuffer(wr)
 			consulError(ctx, "[tcpdump] read payload find err: %v", err)
-			fmt.Println(string(codec.NewHexDumpCodec().Encode(data.Data())))
+			fmt.Println(string(codec.NewHexDumpCodec().Encode(tcpLayer.Payload)))
 			continue
 		}
+		bufutils.ResetBuffer(wr)
 		continue
 	}
 	return nil
@@ -219,7 +222,8 @@ func handlerHttp(ctx context.Context, reader *bufio.Reader) error {
 }
 
 func handlerThrift(ctx context.Context, reader *bufio.Reader) error {
-	protocol, err := thrift_codec.GetProtocol(reader)
+	ctx = thrift_codec.InjectMateInfo(ctx)
+	protocol, err := thrift_codec.GetProtocol(ctx, reader)
 	if err != nil {
 		return errors.Wrap(err, "decode thrift protocol error")
 	}
@@ -227,6 +231,7 @@ func handlerThrift(ctx context.Context, reader *bufio.Reader) error {
 	if err != nil {
 		return errors.Wrap(err, "decode thrift message error")
 	}
+	result.MetaInfo = thrift_codec.GetMateInfo(ctx)
 	result.Protocol = protocol
 	fmt.Println(commons.ToPrettyJsonString(result))
 	return nil

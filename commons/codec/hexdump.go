@@ -40,7 +40,7 @@ func (hexDumpCodec) Decode(src []byte) ([]byte, error) {
 		if len(split) == 0 {
 			continue
 		}
-		if !(strings.HasPrefix(split[0], "0x") || strings.HasPrefix(split[0], "0000")) {
+		if !(strings.HasPrefix(split[0], "0x") || strings.HasPrefix(split[0], "0000") || strings.HasPrefix(split[0], "00")) {
 			continue
 		}
 		for index, elem := range split {
@@ -50,7 +50,10 @@ func (hexDumpCodec) Decode(src []byte) ([]byte, error) {
 			if elem[0] == '|' { // end
 				break
 			}
-			recordData.WriteString(elem)
+			if len(elem) == 2 && (elem[0] >= '0' && elem[0] <= '9') && (elem[1] >= '0' && elem[1] <= '9') {
+				recordData.WriteString(elem)
+			}
+			//recordData.WriteString(elem)
 		}
 	}
 	return NewHexCodec().Decode([]byte(recordData.String()))

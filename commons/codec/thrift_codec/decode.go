@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/anthony-dong/go-sdk/commons/codec/thrift_codec/kitex"
+
 	"github.com/anthony-dong/go-sdk/commons/logs"
 
 	"github.com/anthony-dong/go-sdk/commons"
@@ -25,6 +27,7 @@ type ThriftMessage struct {
 	Exception   *ThriftException   `json:"exception,omitempty"` // MessageType=EXCEPTION 存在异常则是这个字段
 	MessageType ThriftTMessageType `json:"message_type"`
 	Protocol    Protocol           `json:"protocol"` // set protocol
+	MetaInfo    *kitex.MetaInfo    `json:"meta_info,omitempty"`
 }
 type ThriftTMessageType thrift.TMessageType
 
