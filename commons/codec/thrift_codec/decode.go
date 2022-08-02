@@ -212,7 +212,7 @@ func DecodeField(ctx context.Context, fieldType thrift.TType, iprot thrift.TProt
 	case thrift.STRUCT:
 		return DecodeStruct(ctx, iprot)
 	default:
-		logs.CtxInfof(ctx, "[DecodeField] can not handler thrift.TType: %s", fieldType)
+		logs.CtxInfof(ctx, "[DecodeField] can not handler thrift.TType: %d", fieldType)
 		return nil, iprot.Skip(fieldType)
 	}
 }

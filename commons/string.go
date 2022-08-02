@@ -84,6 +84,9 @@ func ToString(value interface{}) string {
 	case float64:
 		return strconv.FormatFloat(v, 'f', -1, 64)
 	default:
+		if v == nil {
+			return ""
+		}
 		if str, isOk := value.(fmt.Stringer); isOk {
 			return str.String()
 		}
@@ -96,6 +99,9 @@ func ToString(value interface{}) string {
 			if text, err := codec.MarshalJSON(); err == nil {
 				return string(text)
 			}
+		}
+		if err, isOK := v.(error); isOK {
+			return err.Error()
 		}
 		if result, err := json.Marshal(v); err == nil {
 			return string(result)

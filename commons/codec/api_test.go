@@ -2,7 +2,9 @@ package codec
 
 import (
 	"errors"
+	"reflect"
 	"testing"
+	"unsafe"
 
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
 	"github.com/stretchr/testify/assert"
@@ -139,4 +141,19 @@ func TestHexdumo(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(decode)
+}
+
+func TestData(t *testing.T) {
+	t.Log([]int{} == nil)
+	t.Log(make([]int, 0) == nil)
+
+	var arr []int
+	t.Log(arr == nil)
+
+	//var arrData = []byte{}
+	pointer := unsafe.Pointer(&arr)
+
+	header := reflect.StringHeader{}
+	header = *(*reflect.StringHeader)(pointer)
+	t.Log(header.Data)
 }

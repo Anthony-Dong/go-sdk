@@ -14,5 +14,8 @@ service ImService {
   rpc GetMessage (im.data.ImMessageRequest) returns (im.data.ImMessageResponse){
     option (api.method) = GET;
     option (api.path) = '/api/v1/im/query';
+    option (api.dynamic_key) = 'messages.0.method';
+    option (api.dynamic_value) = 'messages.0.value';
+    option (api.dynamic_response) = true;
   };
 }

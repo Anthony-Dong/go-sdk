@@ -17,10 +17,10 @@
 package kitex
 
 import (
-	"bufio"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strconv"
 )
 
@@ -115,7 +115,12 @@ func (m MetaInfo) String() string {
 	return string(marshal)
 }
 
-func IsTTHeader(reader *bufio.Reader) bool {
+type reader interface {
+	io.Reader
+	Peek(int) ([]byte, error)
+}
+
+func IsTTHeader(reader reader) bool {
 	flag, err := reader.Peek(Size32 * 2)
 	if err != nil {
 		return false
@@ -123,7 +128,7 @@ func IsTTHeader(reader *bufio.Reader) bool {
 	return isTTHeader(flag)
 }
 
-func ReadTTHeader(reader *bufio.Reader, metaInfo *MetaInfo) (headerSize int, err error) {
+func ReadTTHeader(reader reader, metaInfo *MetaInfo) (headerSize int, err error) {
 	headerMeta, err := reader.Peek(TTHeaderMetaSize)
 	if err != nil {
 		return 0, err
@@ -170,7 +175,7 @@ func readMetaInfo(idx int, buf []byte, message *MetaInfo) error {
 	return readKVInfo(idx, buf, message)
 }
 
-func IsMeshHeader(reader *bufio.Reader) bool {
+func IsMeshHeader(reader reader) bool {
 	flag, err := reader.Peek(2 * Size32)
 	if err != nil {
 		return false
@@ -178,7 +183,7 @@ func IsMeshHeader(reader *bufio.Reader) bool {
 	return isMeshHeader(flag)
 }
 
-func ReadMeshHeader(reader *bufio.Reader, metaInfo *MetaInfo) (size int, err error) {
+func ReadMeshHeader(reader reader, metaInfo *MetaInfo) (size int, err error) {
 	headerMeta, err := reader.Peek(Size32)
 	if err != nil {
 		return 0, fmt.Errorf("meshHeader read header meta failed: %v", err)

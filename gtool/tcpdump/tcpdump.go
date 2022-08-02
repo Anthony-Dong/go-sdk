@@ -1,22 +1,17 @@
 package tcpdump
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"io"
+	"github.com/anthony-dong/go-sdk/commons/codec"
+	"github.com/anthony-dong/go-sdk/commons/tcpdump"
 	"net"
 	"path/filepath"
 	"strings"
 
 	"github.com/fatih/color"
 
-	"github.com/valyala/fasthttp"
-
 	"github.com/anthony-dong/go-sdk/commons"
-	"github.com/anthony-dong/go-sdk/commons/bufutils"
-	"github.com/anthony-dong/go-sdk/commons/codec"
-	"github.com/anthony-dong/go-sdk/commons/codec/thrift_codec"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -73,180 +68,48 @@ func run(ctx context.Context, filename string, msgType MsgType, verbose bool) er
 	source.Lazy = false
 	source.NoCopy = true
 	source.DecodeStreamsAsDatagrams = true
-	for data := range source.Packets() {
-		debugPacket(data, verbose)
-		tcp := data.Layer(layers.LayerTypeTCP)
-		tcpLayer, isOk := tcp.(*layers.TCP)
-		if !isOk {
-			continue
-		}
-		// tcpdump 'tcp[13] == 0x18'
-		if !(tcpLayer.ACK && tcpLayer.PSH) { // 仅抓取 PSH的包(因为应用层只会使用PSH+ACK传输数据包)
-			continue
-		}
-		wr := bufutils.NewBuffer()
-		reader := bufio.NewReader(wr)
-		if _, err := wr.Write(tcpLayer.Payload); err != nil {
-			consulError(ctx, "[tcpdump] write payload find err: %v", err)
-			fmt.Println(string(codec.NewHexDumpCodec().Encode(tcpLayer.Payload)))
-			bufutils.ResetBuffer(wr)
-			continue
-		}
-		if err := handlerTCPData(ctx, reader, msgType); err != nil {
-			bufutils.ResetBuffer(wr)
-			consulError(ctx, "[tcpdump] read payload find err: %v", err)
-			fmt.Println(string(codec.NewHexDumpCodec().Encode(tcpLayer.Payload)))
-			continue
-		}
-		bufutils.ResetBuffer(wr)
-		continue
-	}
-	return nil
-}
-
-//  tcp, _ := tcpLayer.(*layers.TCP)
-func handlerTCPData(ctx context.Context, reader *bufio.Reader, msgType MsgType) error {
+	dump := tcpdump.NewCtx(ctx)
 	switch msgType {
 	case Thrift:
-		return handlerThrift(ctx, reader)
+		dump.AddDecoder(string(msgType), tcpdump.NewThriftDecoder())
 	case HTTP:
-		return handlerHttp(ctx, reader)
+		dump.AddDecoder(string(msgType), tcpdump.NewHTTP1Decoder())
 	}
-	return errors.Errorf(`not support msg type: %s`, msgType)
-}
-
-// 	MethodGet     = "GET"
-//	MethodHead    = "HEAD"
-//	MethodPost    = "POST"
-//	MethodPut     = "PUT"
-//	MethodPatch   = "PATCH" // RFC 5789
-//	MethodDelete  = "DELETE"
-//	MethodConnect = "CONNECT"
-//	MethodOptions = "OPTIONS"
-//	MethodTrace   = "TRACE"
-
-func isHttpResponse(ctx context.Context, reader *bufio.Reader) (bool, error) {
-	peek, err := reader.Peek(6)
-	if err != nil {
-		return false, err
-	}
-	if string(peek) == "HTTP/1" {
-		return true, nil
-	}
-	return false, nil
-}
-func isHttpRequest(ctx context.Context, reader *bufio.Reader) (bool, error) {
-	peek, err := reader.Peek(7)
-	if err != nil {
-		return false, err
-	}
-	if method := string(peek[:3]); method == "GET" || method == "POST" {
-		return true, nil
-	}
-	if method := string(peek[:4]); method == "HEAD" || method == "POST" {
-		return true, nil
-	}
-	if method := string(peek[:5]); method == "PATCH" || method == "TRACE" {
-		return true, nil
-	}
-	if method := string(peek[:6]); method == "DELETE" {
-		return true, nil
-	}
-	if method := string(peek[:7]); method == "OPTIONS" || method == "CONNECT" {
-		return true, nil
-	}
-	return false, nil
-}
-
-func handlerHttp(ctx context.Context, reader *bufio.Reader) error {
-	crlfNum := 0 // /r/n 换行符， http协议分割符号本质上是换行符！所以清除头部的换行符(假如存在这种case)
-	for {
-		peek, err := reader.Peek(2)
-		if err != nil {
-			return errors.Wrap(err, `read http content error`)
-		}
-		if peek[0] == '\r' && peek[1] == '\n' {
-			crlfNum = crlfNum + 2
+	for data := range source.Packets() {
+		packet := debugPacket(data, verbose)
+		// tcp 数据帧一般数据帧为 PSH & ACK 或者是 ACK
+		// tcpdump 'tcp[13] == 0x18' || tcpdump 'tcp[13] == 0x10'
+		// 1. 大包情况下是ACK数据包，当发送端希望接口端尽快处理数据时会发送PSH标识, 也就是数据包大概情况是 ACK -> ACK -> ACK -> ACK&PSH 结束，但是也不一定，可能是 ACK -> ACK -> ACK -> ACK&PSH -> ACK -> ACK&PSH
+		// 2. 小包其实就直接是 PSH & ACK 组合了
+		// 3. tcpdump 在处理粘包问题很难处理，wireshark也不太好处理, 最好的方式就是通过ack id 发生变化再进行处理
+		//if !(packet.IsPsh() || packet.IsACK()) {
+		//	continue
+		//}
+		if len(packet.Data) == 0 {
 			continue
 		}
-		break
-	}
-	if crlfNum != 0 {
-		if _, err := reader.Read(make([]byte, crlfNum)); err != nil {
-			return errors.Wrap(err, `read http content error`)
+		if !packet.IsACK() {
+			dump.Info(string(codec.NewHexDumpCodec().Encode(packet.Data)))
+			continue
+		}
+		if err := dump.HandlerPacket(packet); err != nil {
+			dump.Error(fmt.Sprintf("%v", err))
 		}
 	}
-
-	copyR := bufutils.NewBuffer()
-	defer bufutils.ResetBuffer(copyR)
-	reader = bufio.NewReader(io.TeeReader(reader, copyR)) // copy
-
-	isRequest, err := isHttpRequest(ctx, reader)
-	if err != nil {
-		return errors.Wrap(err, `read http request content error`)
-	}
-	if isRequest {
-		request := fasthttp.AcquireRequest()
-		if err := request.Read(reader); err != nil {
-			return errors.Wrap(err, `read http request content error`)
-		}
-		if request.MayContinue() {
-			if err := request.ContinueReadBody(reader, 0); err != nil {
-				return errors.Wrap(err, `read http request continue content error`)
-			}
-		}
-		if data := copyR.String(); strings.HasSuffix(data, "\r\n") {
-			fmt.Print(data)
-		} else {
-			fmt.Println(data)
-		}
-		return nil
-	}
-	isResponse, err := isHttpResponse(ctx, reader)
-	if err != nil {
-		return errors.Wrap(err, `read http response content error`)
-	}
-	if isResponse {
-		response := fasthttp.AcquireResponse()
-		if err := response.Read(reader); err != nil {
-			return errors.Wrap(err, `read http response content error`)
-		}
-		if data := copyR.String(); strings.HasSuffix(data, "\r\n") {
-			fmt.Print(data)
-		} else {
-			fmt.Println(data)
-		}
-		return nil
-	}
-	return errors.Errorf(`invalid http content`)
-}
-
-func handlerThrift(ctx context.Context, reader *bufio.Reader) error {
-	ctx = thrift_codec.InjectMateInfo(ctx)
-	protocol, err := thrift_codec.GetProtocol(ctx, reader)
-	if err != nil {
-		return errors.Wrap(err, "decode thrift protocol error")
-	}
-	result, err := thrift_codec.DecodeMessage(context.Background(), thrift_codec.NewTProtocol(reader, protocol))
-	if err != nil {
-		return errors.Wrap(err, "decode thrift message error")
-	}
-	result.MetaInfo = thrift_codec.GetMateInfo(ctx)
-	result.Protocol = protocol
-	fmt.Println(commons.ToPrettyJsonString(result))
 	return nil
 }
 
-func debugPacket(packed gopacket.Packet, verbose bool) {
-	//fmt.Println(packed.Dump())
+var packetCounter = 1
+
+func debugPacket(packet gopacket.Packet, verbose bool) tcpdump.Packet {
 	var (
 		src, dest         net.IP
 		L3IsOk, L4IsOK    bool
 		srcPort, destPort int
-		tcpFlags          string
-		seq, ack          int
+		tcpFlags          []string
+		data              = tcpdump.Packet{}
 	)
-	switch L3 := packed.NetworkLayer().(type) {
+	switch L3 := packet.NetworkLayer().(type) {
 	case *layers.IPv4:
 		L3IsOk = true
 		src = L3.SrcIP
@@ -256,61 +119,48 @@ func debugPacket(packed gopacket.Packet, verbose bool) {
 		src = L3.SrcIP
 		dest = L3.DstIP
 	}
-	switch L4 := packed.TransportLayer().(type) {
+	switch L4 := packet.TransportLayer().(type) {
 	case *layers.TCP:
 		L4IsOK = true
-		seq = int(L4.Seq)
-		ack = int(L4.Ack)
 		srcPort = int(L4.SrcPort)
 		destPort = int(L4.DstPort)
-		var flags []string
-		if L4.FIN {
-			flags = append(flags, "FIN")
-		}
-		if L4.SYN {
-			flags = append(flags, "SYN")
-		}
-		if L4.ACK {
-			flags = append(flags, "ACK")
-		}
-		if L4.PSH {
-			flags = append(flags, "PSH")
-		}
-		if L4.RST {
-			flags = append(flags, "RST")
-		}
-		if L4.URG {
-			flags = append(flags, "URG")
-		}
-		if L4.ECE {
-			flags = append(flags, "ECE")
-		}
-		if L4.CWR {
-			flags = append(flags, "CWR")
-		}
-		if L4.NS {
-			flags = append(flags, "NS")
-		}
-		tcpFlags = strings.Join(flags, ",")
+		tcpFlags = loadTcpFlag(L4)
 	}
 	if L3IsOk && L4IsOK {
-		payloadSize := 0
-		if packed.ApplicationLayer() != nil {
-			payloadSize = len(packed.ApplicationLayer().Payload())
+		data.Src = tcpdump.IpPort(src.String(), srcPort)
+		data.Dst = tcpdump.IpPort(dest.String(), destPort)
+		data.TCPFlag = tcpFlags
+		tcp := packet.TransportLayer().(*layers.TCP)
+		result := HandlerTcp(data.Src, data.Dst, tcp)
+		if result.StatusInfo != OutOfOrderStatus {
+			data.Data = tcp.Payload
 		}
-		fmt.Printf("[%s] [%s-%s-%s] [%s] [S%d A%d] [%s:%d -> %s:%d] [%d Byte]\n", packed.Metadata().Timestamp.Format(commons.FormatTimeV1), packed.LinkLayer().LayerType(), packed.NetworkLayer().LayerType(), packed.TransportLayer().LayerType(), tcpFlags, seq, ack, src, srcPort, dest, destPort, payloadSize)
+		data.ACK = int(tcp.Ack)
+		payloadSize := len(tcp.Payload)
+		builder := strings.Builder{}
+		builder.WriteString(fmt.Sprintf("[%d] ", packetCounter))
+		builder.WriteString(fmt.Sprintf("[%s] ", packet.Metadata().Timestamp.Format(commons.FormatTimeV1)))
+		// packet.LinkLayer().LayerType(),
+		builder.WriteString(fmt.Sprintf("[%s-%s] ", packet.NetworkLayer().LayerType(), packet.TransportLayer().LayerType()))
+		builder.WriteString(fmt.Sprintf("[%s -> %s] ", data.Src, data.Dst))
+		builder.WriteString(fmt.Sprintf("[%s] ", strings.Join(tcpFlags, ",")))
+		builder.WriteString(fmt.Sprintf("%s ", GetRelativeInfo(data.Src, data.Dst, tcp)))
+		if payloadSize != 0 {
+			builder.WriteString(fmt.Sprintf("[%d Byte] ", payloadSize))
+		}
+		builder.WriteString(fmt.Sprintf("%v", result))
+		fmt.Println(builder.String())
+		packetCounter = packetCounter + 1
 	}
 	if !verbose {
-		return
+		return data
 	}
-
-	if len(packed.Layers()) < 4 { // 小于4层
-		fmt.Println(packed.Dump())
-		return
+	if len(packet.Layers()) < 4 { // 小于4层
+		fmt.Println(packet.Dump())
+		return data
 	}
-
 	i := 0
-	for _, l := range packed.Layers() {
+	for _, l := range packet.Layers() {
 		i = i + 1
 		if i == 4 {
 			break
@@ -318,6 +168,7 @@ func debugPacket(packed gopacket.Packet, verbose bool) {
 		fmt.Printf("--- Layer %d ---\n%s", i, gopacket.LayerDump(l))
 	}
 	fmt.Printf("--- Layer 4 ---\n")
+	return data
 }
 
 func consulError(ctx context.Context, format string, v ...interface{}) {
@@ -326,4 +177,36 @@ func consulError(ctx context.Context, format string, v ...interface{}) {
 
 func consulInfo(ctx context.Context, format string, v ...interface{}) {
 	color.Green(format, v...)
+}
+
+func loadTcpFlag(L4 *layers.TCP) []string {
+	var flags []string
+	if L4.FIN {
+		flags = append(flags, "FIN")
+	}
+	if L4.SYN {
+		flags = append(flags, "SYN")
+	}
+	if L4.ACK {
+		flags = append(flags, "ACK")
+	}
+	if L4.PSH {
+		flags = append(flags, "PSH")
+	}
+	if L4.RST {
+		flags = append(flags, "RST")
+	}
+	if L4.URG {
+		flags = append(flags, "URG")
+	}
+	if L4.ECE {
+		flags = append(flags, "ECE")
+	}
+	if L4.CWR {
+		flags = append(flags, "CWR")
+	}
+	if L4.NS {
+		flags = append(flags, "NS")
+	}
+	return flags
 }

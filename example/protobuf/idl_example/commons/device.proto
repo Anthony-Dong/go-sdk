@@ -1,9 +1,16 @@
 syntax = "proto2";
 package im.commons;
+import "api.proto";
 
 option go_package = "github.com/anthony-dong/go-tool/internal/example/protobuf/idl_example/pb_gen/commons";
 
 message DeviceInfo{
-  optional int64 Id = 1 [default = 0];
+    option (api.dynamic) = {key: "Asset", value:"AssetMessage"};
+    option (api.dynamic) = {key: "AutoCover", value:"AutoCoverMessage"};
+
+//  optional int64 Id = 1 [default = 0,
+//    (api.im_message) = {method: "Asset", method_type:"AssetMessage"}
+//  ];
   optional string Name = 2 [default = ''];
+  map<string, string> Name3 = 3;
 }

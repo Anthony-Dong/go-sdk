@@ -39,6 +39,7 @@ func clear() {
 			"/vendor",
 			"/.idea",
 			"/test",
+			"/gtool/tcpdump/test",
 		}
 		//Git的规则
 		gitIgnore = CompileIgnoreLines(ignorePattern...)

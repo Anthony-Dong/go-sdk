@@ -1,7 +1,6 @@
 package thrift_codec
 
 import (
-	"bufio"
 	"context"
 	"encoding/binary"
 	"errors"
@@ -77,6 +76,11 @@ func (p Protocol) MarshalText() (text []byte, err error) {
 	return []byte(p.String()), nil
 }
 
+type reader interface {
+	io.Reader
+	Peek(int) ([]byte, error)
+}
+
 func NewTProtocol(reader io.Reader, protocol Protocol) thrift.TProtocol {
 	tReader := thrift.NewStreamTransportR(reader)
 	switch protocol {
@@ -128,7 +132,7 @@ func readBytes(r io.Reader, len int) ([]byte, error) {
 }
 
 // flag 为4字节
-func IsUnframedBinary(reader *bufio.Reader, offset int) bool {
+func IsUnframedBinary(reader reader, offset int) bool {
 	/**
 	Binary protocol Message, strict encoding, 12+ bytes:
 	+--------+--------+--------+--------+--------+--------+--------+--------+--------+...+--------+--------+--------+--------+--------+
@@ -152,7 +156,7 @@ const (
 	FrameHeaderSize = 4
 )
 
-func IsUnframedUnStrictBinary(reader *bufio.Reader, offset int) bool {
+func IsUnframedUnStrictBinary(reader reader, offset int) bool {
 	/**
 	UnframedBinary 的非严格模式，头部4字节一定会大于0
 	Binary protocol Message, old encoding, 9+ bytes:
@@ -180,7 +184,7 @@ func IsUnframedUnStrictBinary(reader *bufio.Reader, offset int) bool {
 	return false
 }
 
-func IsUnframedCompact(reader *bufio.Reader, offset int) bool {
+func IsUnframedCompact(reader reader, offset int) bool {
 	/**
 	Compact protocol Message (4+ bytes):
 	+--------+--------+--------+...+--------+--------+...+--------+--------+...+--------+
@@ -195,11 +199,11 @@ func IsUnframedCompact(reader *bufio.Reader, offset int) bool {
 	return flag[0] == thrift.COMPACT_PROTOCOL_ID && flag[1]&thrift.COMPACT_VERSION_MASK == thrift.COMPACT_VERSION
 }
 
-func IsFramedBinary(reader *bufio.Reader, offset int) bool {
+func IsFramedBinary(reader reader, offset int) bool {
 	return IsUnframedBinary(reader, offset+4)
 }
 
-func IsUnframedHeader(reader *bufio.Reader, offset int) bool {
+func IsUnframedHeader(reader reader, offset int) bool {
 	/**
 	THeader proto
 	  0 1 2 3 4 5 6 7 8 9 a b c d e f 0 1 2 3 4 5 6 7 8 9 a b c d e f
@@ -230,7 +234,7 @@ func IsUnframedHeader(reader *bufio.Reader, offset int) bool {
 // GetProtocol 自动获取请求的消息协议！记住一定是消息协议！
 // reader *bufio.Reader 类型是因为重复读！
 // GetProtocol 使用前需要通过 InjectMateInfo 注入MetaInfo
-func GetProtocol(ctx context.Context, reader *bufio.Reader) (Protocol, error) {
+func GetProtocol(ctx context.Context, reader reader) (Protocol, error) {
 	if IsUnframedHeader(reader, 0) {
 		return UnframedHeader, nil
 	}
