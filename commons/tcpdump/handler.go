@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
 	"github.com/anthony-dong/go-sdk/commons/codec"
 	"github.com/fatih/color"
@@ -34,6 +35,7 @@ type Context struct {
 	decoder     []Decoder
 
 	Parallel bool
+	Verbose  bool
 }
 
 func NewCtx(ctx context.Context) *Context {
@@ -66,12 +68,18 @@ func (c *Context) Info(format string, v ...interface{}) {
 	fmt.Printf(format, v...)
 }
 
-func (c *Context) Error(format string, v ...interface{}) {
-	color.Red("[ERROR] "+format, v...)
+func (c *Context) InfoJson(v interface{}) {
+	c.Info(commons.ToPrettyJsonString(v))
 }
 
-func (c *Context) DecodeSuccess() {
-	c.index = -1
+func (c *Context) Errorf(format string, v ...interface{}) {
+	if !c.Verbose {
+		return
+	}
+	color.Red("[ERROR] "+format, v...)
+}
+func (c *Context) Error(err error) {
+	c.Errorf("%v", err)
 }
 
 type Packet struct {
@@ -140,18 +148,18 @@ func (c *Context) HandlerPacket(p Packet) error {
 	if c.packets[key][p.ACK] == nil {
 		c.packets[key][p.ACK] = []byte{}
 	}
-	ctrl := c.packets[key][p.ACK]
-	ctrl = append(ctrl, p.Data...)
-	c.packets[key][p.ACK] = ctrl
-	if p.IsPsh() {
-		c.decode(ctrl, func() {
+	payload := c.packets[key][p.ACK]
+	payload = append(payload, p.Data...)
+	c.packets[key][p.ACK] = payload
+	if p.IsACK() {
+		c.decode(p.Data, payload, func() {
 			delete(c.packets[key], p.ACK)
 		})
 	}
 	return nil
 }
 
-func (c *Context) decode(payload []byte, success func()) {
+func (c *Context) decode(cur []byte, payload []byte, success func()) {
 	c.index = 0
 	for {
 		if c.index > len(c.decoder)-1 { // end
@@ -161,22 +169,15 @@ func (c *Context) decode(payload []byte, success func()) {
 		buffer.Write(payload)
 		if err := c.decoder[c.index](c, bufio.NewReader(buffer)); err != nil {
 			bufutils.ResetBuffer(buffer)
-			c.Error("[%s] %v", c.decoderName[c.index], err)
+			c.Errorf("[%s] %v", c.decoderName[c.index], err)
 			c.index = c.index + 1
 			continue
 		}
 		bufutils.ResetBuffer(buffer)
-		if c.index == -1 { // success ...
-			success()
-			return
-		}
-		c.index = c.index + 1
-	}
-
-	if len(payload) < 64*1<<10 {
-		c.Info(string(codec.NewHexDumpCodec().Encode(payload)))
+		success()
 		return
 	}
+	c.Info(string(codec.NewHexDumpCodec().Encode(cur)))
 }
 
 // IpPort 支持 ipv6:port, [ipv6]:port, ip:port

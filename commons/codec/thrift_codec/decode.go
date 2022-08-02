@@ -23,12 +23,13 @@ type ThriftException struct {
 type ThriftMessage struct {
 	Method      string             `json:"method"`
 	SeqId       int32              `json:"seq_id"`
+	Protocol    Protocol           `json:"protocol"` // set protocol
+	MessageType ThriftTMessageType `json:"message_type"`
 	Payload     *FieldOrderMap     `json:"payload,omitempty"`
 	Exception   *ThriftException   `json:"exception,omitempty"` // MessageType=EXCEPTION 存在异常则是这个字段
-	MessageType ThriftTMessageType `json:"message_type"`
-	Protocol    Protocol           `json:"protocol"` // set protocol
 	MetaInfo    *kitex.MetaInfo    `json:"meta_info,omitempty"`
 }
+
 type ThriftTMessageType thrift.TMessageType
 
 const (

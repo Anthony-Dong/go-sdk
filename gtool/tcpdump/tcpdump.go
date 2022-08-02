@@ -29,37 +29,36 @@ const (
 func NewCmd() (*cobra.Command, error) {
 	var (
 		filename string
-		msgType  string
 		verbose  bool
 	)
 	cmd := &cobra.Command{
-		Use:   `tcpdump [-r file] [-t type] [-v]`,
+		Use:   `tcpdump [-r file] [-v]`,
 		Short: `decode tcpdump file`,
 		Long:  `decode tcpdump file, help doc: https://github.com/Anthony-Dong/go-sdk/tree/master/gtool/tcpdump`,
 		Example: `  step1: tcpdump 'port 8080' -w ~/data/tcpdump.pcap
-  step2: gtool tcpdump -r ~/data/tcpdump.pcap -t http`,
+  step2: gtool tcpdump -r ~/data/tcpdump.pcap`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd.Context(), filename, MsgType(msgType), verbose)
+			return run(cmd.Context(), filename, verbose)
 		},
 	}
 	cmd.Flags().StringVarP(&filename, "file", "r", "", "Read tcpdump_xxx_file.pcap")
-	cmd.Flags().StringVarP(&msgType, "type", "t", "", "Decode message type: thrift|http")
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Turn on verbose mode")
 	if err := cmd.MarkFlagRequired("file"); err != nil {
-		return nil, err
-	}
-	if err := cmd.MarkFlagRequired("type"); err != nil {
 		return nil, err
 	}
 	return cmd, nil
 }
 
-func run(ctx context.Context, filename string, msgType MsgType, verbose bool) error {
+func run(ctx context.Context, filename string, verbose bool) error {
+	dump := tcpdump.NewCtx(ctx)
+	dump.Verbose = verbose
+	dump.AddDecoder("http1.x", tcpdump.NewHTTP1Decoder())
+	dump.AddDecoder("thrift", tcpdump.NewThriftDecoder())
 	filename, err := filepath.Abs(filename)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("open %s file err", filename))
 	}
-	consulInfo(ctx, "[tcpdump] read file: %s, msg type: %s", filename, msgType)
+	dump.Info(color.BlueString("[tcpdump] read file: %s", filename))
 	src, err := pcap.OpenOffline(filename)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("open %s file err", filename))
@@ -68,15 +67,8 @@ func run(ctx context.Context, filename string, msgType MsgType, verbose bool) er
 	source.Lazy = false
 	source.NoCopy = true
 	source.DecodeStreamsAsDatagrams = true
-	dump := tcpdump.NewCtx(ctx)
-	switch msgType {
-	case Thrift:
-		dump.AddDecoder(string(msgType), tcpdump.NewThriftDecoder())
-	case HTTP:
-		dump.AddDecoder(string(msgType), tcpdump.NewHTTP1Decoder())
-	}
 	for data := range source.Packets() {
-		packet := debugPacket(data, verbose)
+		packet := debugPacket(data)
 		// tcp 数据帧一般数据帧为 PSH & ACK 或者是 ACK
 		// tcpdump 'tcp[13] == 0x18' || tcpdump 'tcp[13] == 0x10'
 		// 1. 大包情况下是ACK数据包，当发送端希望接口端尽快处理数据时会发送PSH标识, 也就是数据包大概情况是 ACK -> ACK -> ACK -> ACK&PSH 结束，但是也不一定，可能是 ACK -> ACK -> ACK -> ACK&PSH -> ACK -> ACK&PSH
@@ -93,7 +85,7 @@ func run(ctx context.Context, filename string, msgType MsgType, verbose bool) er
 			continue
 		}
 		if err := dump.HandlerPacket(packet); err != nil {
-			dump.Error(fmt.Sprintf("%v", err))
+			dump.Errorf(fmt.Sprintf("%v", err))
 		}
 	}
 	return nil
@@ -101,7 +93,7 @@ func run(ctx context.Context, filename string, msgType MsgType, verbose bool) er
 
 var packetCounter = 1
 
-func debugPacket(packet gopacket.Packet, verbose bool) tcpdump.Packet {
+func debugPacket(packet gopacket.Packet) tcpdump.Packet {
 	var (
 		src, dest         net.IP
 		L3IsOk, L4IsOK    bool
@@ -151,14 +143,15 @@ func debugPacket(packet gopacket.Packet, verbose bool) tcpdump.Packet {
 		builder.WriteString(fmt.Sprintf("%v", result))
 		fmt.Println(builder.String())
 		packetCounter = packetCounter + 1
-	}
-	if !verbose {
 		return data
 	}
+
 	if len(packet.Layers()) < 4 { // 小于4层
 		fmt.Println(packet.Dump())
 		return data
 	}
+
+	// 处理不了的4层
 	i := 0
 	for _, l := range packet.Layers() {
 		i = i + 1
