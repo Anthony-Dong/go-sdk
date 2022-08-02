@@ -3,9 +3,10 @@ package tcpdump
 import (
 	"encoding/binary"
 	"fmt"
+	"strings"
+
 	"github.com/fatih/color"
 	"github.com/google/gopacket/layers"
-	"strings"
 )
 
 var (

@@ -3,10 +3,11 @@ package tcpdump
 import (
 	"bufio"
 	"context"
+	"io"
+
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
-	"io"
 )
 
 // 	MethodGet     = "GET"

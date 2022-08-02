@@ -3,14 +3,15 @@ package tcpdump
 import (
 	"bufio"
 	"context"
+	"encoding/hex"
 	"fmt"
-	"github.com/anthony-dong/go-sdk/commons"
-	"github.com/anthony-dong/go-sdk/commons/bufutils"
-	"github.com/anthony-dong/go-sdk/commons/codec"
-	"github.com/fatih/color"
 	"io"
 	"net"
 	"strconv"
+
+	"github.com/anthony-dong/go-sdk/commons"
+	"github.com/anthony-dong/go-sdk/commons/bufutils"
+	"github.com/fatih/color"
 )
 
 type Decoder func(ctx *Context, reader SourceReader) error
@@ -27,23 +28,29 @@ type Source interface {
 
 type Context struct {
 	context.Context
+	Config ContextConfig
 
 	packets map[string]map[int][]byte
 
 	index       int
 	decoderName []string
 	decoder     []Decoder
-
-	Parallel bool
-	verbose  bool
-	dump     bool // -X
 }
 
-func NewCtx(ctx context.Context, verbose bool, dump bool) *Context {
+type ContextConfig struct {
+	Verbose     bool
+	Dump        bool
+	DumpMaxSize int
+}
+
+func NewDefaultConfig() ContextConfig {
+	return ContextConfig{}
+}
+
+func NewCtx(ctx context.Context, cfg ContextConfig) *Context {
 	return &Context{
 		Context: ctx,
-		verbose: verbose,
-		dump:    dump,
+		Config:  cfg,
 	}
 }
 func (c *Context) AddDecoder(name string, handler Decoder) {
@@ -69,15 +76,18 @@ func (c *Context) InfoJson(v interface{}) {
 	c.Info(commons.ToPrettyJsonString(v))
 }
 
-func (c *Context) Dump(format string, v ...interface{}) {
-	if !c.dump {
+func (c *Context) Dump(payload []byte) {
+	if !c.Config.Dump {
 		return
 	}
-	c.Info(format, v...)
+	if c.Config.DumpMaxSize != 0 && len(payload) > c.Config.DumpMaxSize {
+		payload = payload[:c.Config.DumpMaxSize]
+	}
+	c.Info(hex.Dump(payload))
 }
 
 func (c *Context) Verbose(format string, v ...interface{}) {
-	if !c.verbose {
+	if !c.Config.Verbose {
 		return
 	}
 	color.Red("[ERROR] "+format, v...)
@@ -169,7 +179,7 @@ func (c *Context) decode(cur []byte, payload []byte, success func()) {
 		success()
 		return
 	}
-	c.Dump(string(codec.NewHexDumpCodec().Encode(cur)))
+	c.Dump(cur)
 }
 
 // IpPort 支持 ipv6:port, [ipv6]:port, ip:port

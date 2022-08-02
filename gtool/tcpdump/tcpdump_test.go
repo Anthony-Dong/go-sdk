@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/anthony-dong/go-sdk/commons/tcpdump"
+
 	"github.com/anthony-dong/go-sdk/commons"
 )
 
@@ -15,6 +17,7 @@ func readFile(file string) string {
 
 func Test_run(t *testing.T) {
 	ctx := context.Background()
+	cfg := tcpdump.NewDefaultConfig()
 	//t.Run("thrift", func(t *testing.T) {
 	//	if err := run(context.Background(), readFile("thrift.pcap"), Thrift, false); err != nil {
 	//		t.Fatal(err)
@@ -33,7 +36,7 @@ func Test_run(t *testing.T) {
 	//})
 	t.Run("thrift_ttheader2", func(t *testing.T) {
 		// thrift_ttheader
-		if err := run(ctx, readFile("out.pcap"), false, false); err != nil {
+		if err := run(ctx, readFile("out.pcap"), cfg); err != nil {
 			t.Fatal(err)
 		}
 	})

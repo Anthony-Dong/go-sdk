@@ -1,10 +1,11 @@
 package bufutils
 
 import (
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewPacketRW(t *testing.T) {

@@ -3,10 +3,11 @@ package tcpdump
 import (
 	"context"
 	"fmt"
-	"github.com/anthony-dong/go-sdk/commons/tcpdump"
 	"net"
 	"path/filepath"
 	"strings"
+
+	"github.com/anthony-dong/go-sdk/commons/tcpdump"
 
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/google/gopacket"
@@ -25,9 +26,8 @@ const (
 
 func NewCmd() (*cobra.Command, error) {
 	var (
+		cfg      = tcpdump.NewDefaultConfig()
 		filename string
-		verbose  bool
-		hexdump  bool
 	)
 	cmd := &cobra.Command{
 		Use:   `tcpdump [-r file] [-v] [-X]`,
@@ -36,22 +36,24 @@ func NewCmd() (*cobra.Command, error) {
 		Example: `  step1: tcpdump 'port 8080' -w ~/data/tcpdump.pcap
   step2: gtool tcpdump -r ~/data/tcpdump.pcap`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd.Context(), filename, verbose, hexdump)
+			return run(cmd.Context(), filename, cfg)
 		},
 	}
 	cmd.Flags().StringVarP(&filename, "file", "r", "", "The packets file, eg: tcpdump_xxx_file.pcap.")
-	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable Display decoded details.")
-	cmd.Flags().BoolVarP(&verbose, "dump", "X", false, "Enable Display payload details with hexdump.")
+	cmd.Flags().BoolVarP(&cfg.Verbose, "verbose", "v", false, "Enable Display decoded details.")
+	cmd.Flags().BoolVarP(&cfg.Dump, "dump", "X", false, "Enable Display payload details with hexdump.")
+	cmd.Flags().IntVarP(&cfg.DumpMaxSize, "max", "", 0, "The hexdump max size")
 	if err := cmd.MarkFlagRequired("file"); err != nil {
 		return nil, err
 	}
 	return cmd, nil
 }
 
-func run(ctx context.Context, filename string, verbose bool, dump bool) error {
-	decoder := tcpdump.NewCtx(ctx, verbose, dump)
-	decoder.AddDecoder("http1.x", tcpdump.NewHTTP1Decoder())
-	decoder.AddDecoder("thrift", tcpdump.NewThriftDecoder())
+func run(ctx context.Context, filename string, cfg tcpdump.ContextConfig) error {
+	decoder := tcpdump.NewCtx(ctx, cfg)
+	decoder.Info("[tcpdump] read file: %s, config: %s", filename, commons.ToJsonString(cfg))
+	decoder.AddDecoder("HTTP1.X", tcpdump.NewHTTP1Decoder())
+	decoder.AddDecoder("Thrift", tcpdump.NewThriftDecoder())
 	filename, err := filepath.Abs(filename)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("open %s file err", filename))
@@ -126,22 +128,18 @@ func debugPacket(packet gopacket.Packet, decoder *tcpdump.Context) tcpdump.Packe
 		return data
 	}
 
-	if len(packet.Layers()) < 4 { // 小于4层
-		decoder.Dump(packet.Dump())
-		return data
-	}
-
-	// 处理不了的4层
-	i := 0
-	for _, l := range packet.Layers() {
-		i = i + 1
-		if i == 4 {
-			break
-		}
-		decoder.Dump("--- Layer %d ---\n%s", i, gopacket.LayerDump(l))
-	}
-	decoder.Dump("--- Layer 4 ---\n")
+	decoder.Info(packet.Dump())
 	return data
+	// 处理不了的4层
+	//i := 0
+	//for _, l := range packet.Layers() {
+	//	i = i + 1
+	//	if i == 4 {
+	//		break
+	//	}
+	//	decoder.Info("--- Layer %d ---\n%s", i, gopacket.LayerDump(l))
+	//}
+	//decoder.Info("--- Layer 4 ---\n")
 }
 
 func loadTcpFlag(L4 *layers.TCP) []string {
