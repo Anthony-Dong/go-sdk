@@ -14,7 +14,7 @@ func readFile(file string) string {
 }
 
 func Test_run(t *testing.T) {
-	ctx:=context.Background()
+	ctx := context.Background()
 	//t.Run("thrift", func(t *testing.T) {
 	//	if err := run(context.Background(), readFile("thrift.pcap"), Thrift, false); err != nil {
 	//		t.Fatal(err)
@@ -33,7 +33,7 @@ func Test_run(t *testing.T) {
 	//})
 	t.Run("thrift_ttheader2", func(t *testing.T) {
 		// thrift_ttheader
-		if err := run(ctx, readFile("out.pcap"), Thrift, false); err != nil {
+		if err := run(ctx, readFile("out.pcap"), false, false); err != nil {
 			t.Fatal(err)
 		}
 	})

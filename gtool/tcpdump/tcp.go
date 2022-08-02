@@ -86,21 +86,37 @@ func NewTCPStatus() *TcpStatusInfo {
 
 type TcpStatusInfo struct {
 	StatusInfo string
+	Level      TcpStatusLevel
+}
+type TcpStatusLevel uint8
+
+const (
+	Level_Info TcpStatusLevel = iota
+	Level_Error
+)
+
+func (t *TcpStatusInfo) Is(status string) bool {
+	return t.StatusInfo == status
 }
 
 func (t *TcpStatusInfo) IsEmpty() bool {
 	return len(t.StatusInfo) == 0
 }
 
-func (t *TcpStatusInfo) Set(status string) {
+func (t *TcpStatusInfo) Set(status string, level TcpStatusLevel) {
 	t.StatusInfo = status
+	t.Level = level
 }
 
 func (t *TcpStatusInfo) String() string {
 	if t == nil || t.StatusInfo == "" {
 		return ""
 	}
-	return "[" + t.StatusInfo + "]"
+	data := "[" + t.StatusInfo + "]"
+	if t.Level == Level_Error {
+		return color.RedString(data)
+	}
+	return data
 }
 
 func HandlerTcp(src, dst string, tcp *layers.TCP) *TcpStatusInfo {
@@ -142,7 +158,7 @@ func HandlerTcp(src, dst string, tcp *layers.TCP) *TcpStatusInfo {
 	}
 	stats := GetTCPStats(src, dst)
 	if sack := GetTCPOptionKindSACK(tcp); sack != nil {
-		result.Set(color.RedString(TcpDupAckStatus + ": " + sack.String(stats)))
+		result.Set(TcpDupAckStatus+": "+sack.String(stats), Level_Error)
 	}
 	if stats == nil {
 		return result
@@ -162,13 +178,13 @@ func HandlerTcp(src, dst string, tcp *layers.TCP) *TcpStatusInfo {
 		stats.Ack.Begin = tcp.Ack - 1
 	}
 	if len(tcp.Payload) == 0 && tcp.Seq == stats.Seq.Cur && tcp.Ack == stats.Ack.Cur && result.IsEmpty() {
-		result.Set(TcpWindowsUpdate)
+		result.Set(TcpWindowsUpdate, Level_Info)
 	}
 	if stats.Seq.Next == tcp.Seq {
 		stats.Seq.Cur = tcp.Seq
 		stats.Seq.Next = tcp.Seq + uint32(len(tcp.Payload))
 	} else {
-		result.Set(color.RedString(OutOfOrderStatus))
+		result.Set(OutOfOrderStatus, Level_Error)
 	}
 	stats.Stat = ESTAB
 	stats.Ack.Cur = tcp.Ack

@@ -20,17 +20,14 @@ export CGO_ENABLED := 1
 # PHONY
 .PHONY : all init build build_tool fmt build_cmd check deploy test help release
 
-all: fmt build_tool ## Let's go!
+all: fmt build ## Let's go!
 
 init: ## init project and init env
 	go mod tidy
 	@if [ ! -e $(shell go env GOPATH)/bin/golangci-lint ]; then curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1; fi
 
-build_tool: ## build gtool
-	@cd gtool; CGO_ENABLED=1 go build -v -ldflags "-s -w"  -o bin/gtool main.go; cd -; mkdir -p bin ;mv gtool/bin/gtool bin/gtool
-
 build: ## cross compiling
-	@cd gtool; bash -x build.sh; cd -
+	@cd gtool; bash -x build.sh; cd - ; rm -rf bin; mv gtool/bin bin
 
 fmt: ## fmt
 	@for elem in `find . -name '*.go' | grep -v 'internal/pkg'`;do goimports -w $$elem; gofmt -w $$elem; done

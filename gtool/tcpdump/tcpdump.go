@@ -3,13 +3,10 @@ package tcpdump
 import (
 	"context"
 	"fmt"
-	"github.com/anthony-dong/go-sdk/commons/codec"
 	"github.com/anthony-dong/go-sdk/commons/tcpdump"
 	"net"
 	"path/filepath"
 	"strings"
-
-	"github.com/fatih/color"
 
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/google/gopacket"
@@ -30,35 +27,35 @@ func NewCmd() (*cobra.Command, error) {
 	var (
 		filename string
 		verbose  bool
+		hexdump  bool
 	)
 	cmd := &cobra.Command{
-		Use:   `tcpdump [-r file] [-v]`,
+		Use:   `tcpdump [-r file] [-v] [-X]`,
 		Short: `decode tcpdump file`,
 		Long:  `decode tcpdump file, help doc: https://github.com/Anthony-Dong/go-sdk/tree/master/gtool/tcpdump`,
 		Example: `  step1: tcpdump 'port 8080' -w ~/data/tcpdump.pcap
   step2: gtool tcpdump -r ~/data/tcpdump.pcap`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd.Context(), filename, verbose)
+			return run(cmd.Context(), filename, verbose, hexdump)
 		},
 	}
-	cmd.Flags().StringVarP(&filename, "file", "r", "", "Read tcpdump_xxx_file.pcap")
-	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Turn on verbose mode")
+	cmd.Flags().StringVarP(&filename, "file", "r", "", "The packets file, eg: tcpdump_xxx_file.pcap.")
+	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable Display decoded details.")
+	cmd.Flags().BoolVarP(&verbose, "dump", "X", false, "Enable Display payload details with hexdump.")
 	if err := cmd.MarkFlagRequired("file"); err != nil {
 		return nil, err
 	}
 	return cmd, nil
 }
 
-func run(ctx context.Context, filename string, verbose bool) error {
-	dump := tcpdump.NewCtx(ctx)
-	dump.Verbose = verbose
-	dump.AddDecoder("http1.x", tcpdump.NewHTTP1Decoder())
-	dump.AddDecoder("thrift", tcpdump.NewThriftDecoder())
+func run(ctx context.Context, filename string, verbose bool, dump bool) error {
+	decoder := tcpdump.NewCtx(ctx, verbose, dump)
+	decoder.AddDecoder("http1.x", tcpdump.NewHTTP1Decoder())
+	decoder.AddDecoder("thrift", tcpdump.NewThriftDecoder())
 	filename, err := filepath.Abs(filename)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("open %s file err", filename))
 	}
-	dump.Info(color.BlueString("[tcpdump] read file: %s", filename))
 	src, err := pcap.OpenOffline(filename)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("open %s file err", filename))
@@ -68,32 +65,15 @@ func run(ctx context.Context, filename string, verbose bool) error {
 	source.NoCopy = true
 	source.DecodeStreamsAsDatagrams = true
 	for data := range source.Packets() {
-		packet := debugPacket(data)
-		// tcp 数据帧一般数据帧为 PSH & ACK 或者是 ACK
-		// tcpdump 'tcp[13] == 0x18' || tcpdump 'tcp[13] == 0x10'
-		// 1. 大包情况下是ACK数据包，当发送端希望接口端尽快处理数据时会发送PSH标识, 也就是数据包大概情况是 ACK -> ACK -> ACK -> ACK&PSH 结束，但是也不一定，可能是 ACK -> ACK -> ACK -> ACK&PSH -> ACK -> ACK&PSH
-		// 2. 小包其实就直接是 PSH & ACK 组合了
-		// 3. tcpdump 在处理粘包问题很难处理，wireshark也不太好处理, 最好的方式就是通过ack id 发生变化再进行处理
-		//if !(packet.IsPsh() || packet.IsACK()) {
-		//	continue
-		//}
-		if len(packet.Data) == 0 {
-			continue
-		}
-		if !packet.IsACK() {
-			dump.Info(string(codec.NewHexDumpCodec().Encode(packet.Data)))
-			continue
-		}
-		if err := dump.HandlerPacket(packet); err != nil {
-			dump.Errorf(fmt.Sprintf("%v", err))
-		}
+		packet := debugPacket(data, decoder)
+		decoder.HandlerPacket(packet)
 	}
 	return nil
 }
 
 var packetCounter = 1
 
-func debugPacket(packet gopacket.Packet) tcpdump.Packet {
+func debugPacket(packet gopacket.Packet, decoder *tcpdump.Context) tcpdump.Packet {
 	var (
 		src, dest         net.IP
 		L3IsOk, L4IsOK    bool
@@ -124,7 +104,7 @@ func debugPacket(packet gopacket.Packet) tcpdump.Packet {
 		data.TCPFlag = tcpFlags
 		tcp := packet.TransportLayer().(*layers.TCP)
 		result := HandlerTcp(data.Src, data.Dst, tcp)
-		if result.StatusInfo != OutOfOrderStatus {
+		if !result.Is(OutOfOrderStatus) {
 			data.Data = tcp.Payload
 		}
 		data.ACK = int(tcp.Ack)
@@ -141,13 +121,13 @@ func debugPacket(packet gopacket.Packet) tcpdump.Packet {
 			builder.WriteString(fmt.Sprintf("[%d Byte] ", payloadSize))
 		}
 		builder.WriteString(fmt.Sprintf("%v", result))
-		fmt.Println(builder.String())
+		decoder.Info(builder.String())
 		packetCounter = packetCounter + 1
 		return data
 	}
 
 	if len(packet.Layers()) < 4 { // 小于4层
-		fmt.Println(packet.Dump())
+		decoder.Dump(packet.Dump())
 		return data
 	}
 
@@ -158,18 +138,10 @@ func debugPacket(packet gopacket.Packet) tcpdump.Packet {
 		if i == 4 {
 			break
 		}
-		fmt.Printf("--- Layer %d ---\n%s", i, gopacket.LayerDump(l))
+		decoder.Dump("--- Layer %d ---\n%s", i, gopacket.LayerDump(l))
 	}
-	fmt.Printf("--- Layer 4 ---\n")
+	decoder.Dump("--- Layer 4 ---\n")
 	return data
-}
-
-func consulError(ctx context.Context, format string, v ...interface{}) {
-	color.Red(format, v...)
-}
-
-func consulInfo(ctx context.Context, format string, v ...interface{}) {
-	color.Green(format, v...)
 }
 
 func loadTcpFlag(L4 *layers.TCP) []string {

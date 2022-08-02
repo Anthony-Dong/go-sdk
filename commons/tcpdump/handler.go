@@ -35,20 +35,17 @@ type Context struct {
 	decoder     []Decoder
 
 	Parallel bool
-	Verbose  bool
+	verbose  bool
+	dump     bool // -X
 }
 
-func NewCtx(ctx context.Context) *Context {
+func NewCtx(ctx context.Context, verbose bool, dump bool) *Context {
 	return &Context{
 		Context: ctx,
+		verbose: verbose,
+		dump:    dump,
 	}
 }
-
-type packetRW struct {
-	buf *bufio.Reader
-	rw  io.ReadWriter
-}
-
 func (c *Context) AddDecoder(name string, handler Decoder) {
 	if c.decoder == nil {
 		c.decoder = []Decoder{}
@@ -72,14 +69,18 @@ func (c *Context) InfoJson(v interface{}) {
 	c.Info(commons.ToPrettyJsonString(v))
 }
 
-func (c *Context) Errorf(format string, v ...interface{}) {
-	if !c.Verbose {
+func (c *Context) Dump(format string, v ...interface{}) {
+	if !c.dump {
+		return
+	}
+	c.Info(format, v...)
+}
+
+func (c *Context) Verbose(format string, v ...interface{}) {
+	if !c.verbose {
 		return
 	}
 	color.Red("[ERROR] "+format, v...)
-}
-func (c *Context) Error(err error) {
-	c.Errorf("%v", err)
 }
 
 type Packet struct {
@@ -108,15 +109,6 @@ func (p *Packet) IsACK() bool {
 	return false
 }
 
-func (p *Packet) IsPsh() bool {
-	for _, elem := range p.TCPFlag {
-		if elem == "PSH" {
-			return true
-		}
-	}
-	return false
-}
-
 func (c *Context) ClosePacket(packet Packet) {
 	if c.packets == nil {
 		c.packets = map[string]map[int][]byte{}
@@ -137,7 +129,7 @@ func (c *Context) findNext(p *Packet) bool {
 	return false
 }
 
-func (c *Context) HandlerPacket(p Packet) error {
+func (c *Context) HandlerPacket(p Packet) {
 	if c.packets == nil {
 		c.packets = map[string]map[int][]byte{}
 	}
@@ -148,15 +140,15 @@ func (c *Context) HandlerPacket(p Packet) error {
 	if c.packets[key][p.ACK] == nil {
 		c.packets[key][p.ACK] = []byte{}
 	}
-	payload := c.packets[key][p.ACK]
-	payload = append(payload, p.Data...)
-	c.packets[key][p.ACK] = payload
-	if p.IsACK() {
+	if p.IsACK() && len(p.Data) > 0 {
+		payload := c.packets[key][p.ACK]
+		payload = append(payload, p.Data...)
+		c.packets[key][p.ACK] = payload
+
 		c.decode(p.Data, payload, func() {
 			delete(c.packets[key], p.ACK)
 		})
 	}
-	return nil
 }
 
 func (c *Context) decode(cur []byte, payload []byte, success func()) {
@@ -169,7 +161,7 @@ func (c *Context) decode(cur []byte, payload []byte, success func()) {
 		buffer.Write(payload)
 		if err := c.decoder[c.index](c, bufio.NewReader(buffer)); err != nil {
 			bufutils.ResetBuffer(buffer)
-			c.Errorf("[%s] %v", c.decoderName[c.index], err)
+			c.Verbose("[%s] %v", c.decoderName[c.index], err)
 			c.index = c.index + 1
 			continue
 		}
@@ -177,7 +169,7 @@ func (c *Context) decode(cur []byte, payload []byte, success func()) {
 		success()
 		return
 	}
-	c.Info(string(codec.NewHexDumpCodec().Encode(cur)))
+	c.Dump(string(codec.NewHexDumpCodec().Encode(cur)))
 }
 
 // IpPort 支持 ipv6:port, [ipv6]:port, ip:port
