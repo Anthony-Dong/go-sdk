@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"path/filepath"
+	"os"
 	"strings"
 
 	"github.com/anthony-dong/go-sdk/commons/tcpdump"
@@ -12,8 +12,6 @@ import (
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
-	"github.com/google/gopacket/pcap"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -43,32 +41,32 @@ func NewCmd() (*cobra.Command, error) {
 	cmd.Flags().BoolVarP(&cfg.Verbose, "verbose", "v", false, "Enable Display decoded details.")
 	cmd.Flags().BoolVarP(&cfg.Dump, "dump", "X", false, "Enable Display payload details with hexdump.")
 	cmd.Flags().IntVarP(&cfg.DumpMaxSize, "max", "", 0, "The hexdump max size")
-	if err := cmd.MarkFlagRequired("file"); err != nil {
-		return nil, err
-	}
 	return cmd, nil
 }
 
 func run(ctx context.Context, filename string, cfg tcpdump.ContextConfig) error {
 	decoder := tcpdump.NewCtx(ctx, cfg)
-	decoder.Info("[tcpdump] read file: %s, config: %s", filename, commons.ToJsonString(cfg))
+	options := NewDecodeOptions()
 	decoder.AddDecoder("HTTP1.X", tcpdump.NewHTTP1Decoder())
 	decoder.AddDecoder("Thrift", tcpdump.NewThriftDecoder())
-	filename, err := filepath.Abs(filename)
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("open %s file err", filename))
+	var source PacketSource
+	if commons.CheckStdInFromPiped() {
+		source = NewConsulSource(os.Stdin, options)
+		decoder.Config.PrintHeader = false
+	} else {
+		var err error
+		source, err = NewFileSource(filename, options)
+		if err != nil {
+			return err
+		}
+		decoder.Config.PrintHeader = true
 	}
-	src, err := pcap.OpenOffline(filename)
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("open %s file err", filename))
-	}
-	source := gopacket.NewPacketSource(src, layers.LayerTypeEthernet)
-	source.Lazy = false
-	source.NoCopy = true
-	source.DecodeStreamsAsDatagrams = true
 	for data := range source.Packets() {
 		packet := debugPacket(data, decoder)
 		decoder.HandlerPacket(packet)
+		if wait, isOk := data.(CustomPacket); isOk {
+			wait.Notify()
+		}
 	}
 	return nil
 }
@@ -123,12 +121,12 @@ func debugPacket(packet gopacket.Packet, decoder *tcpdump.Context) tcpdump.Packe
 			builder.WriteString(fmt.Sprintf("[%d Byte] ", payloadSize))
 		}
 		builder.WriteString(fmt.Sprintf("%v", result))
-		decoder.Info(builder.String())
+		decoder.PrintHeader(builder.String())
 		packetCounter = packetCounter + 1
 		return data
 	}
 
-	decoder.Info(packet.Dump())
+	//decoder.Info(packet.Dump())
 	return data
 	// 处理不了的4层
 	//i := 0

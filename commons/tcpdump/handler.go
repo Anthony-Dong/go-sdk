@@ -9,7 +9,6 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
 	"github.com/fatih/color"
 )
@@ -38,7 +37,10 @@ type Context struct {
 }
 
 type ContextConfig struct {
-	Verbose     bool
+	PrintHeader bool
+
+	Verbose bool
+
 	Dump        bool
 	DumpMaxSize int
 }
@@ -61,7 +63,18 @@ func (c *Context) AddDecoder(name string, handler Decoder) {
 	c.decoder = append(c.decoder, handler)
 }
 
-func (c *Context) Info(format string, v ...interface{}) {
+func (c *Context) PrintHeader(header string) {
+	if !c.Config.PrintHeader {
+		return
+	}
+	c.info(header)
+}
+
+func (c *Context) PrintPayload(payload string) {
+	c.info(payload)
+}
+
+func (c *Context) info(format string, v ...interface{}) {
 	if len(format) != 0 && format[len(format)-1] != '\n' {
 		format = format + "\n"
 	}
@@ -72,10 +85,6 @@ func (c *Context) Info(format string, v ...interface{}) {
 	fmt.Printf(format, v...)
 }
 
-func (c *Context) InfoJson(v interface{}) {
-	c.Info(commons.ToPrettyJsonString(v))
-}
-
 func (c *Context) Dump(payload []byte) {
 	if !c.Config.Dump {
 		return
@@ -83,7 +92,7 @@ func (c *Context) Dump(payload []byte) {
 	if c.Config.DumpMaxSize != 0 && len(payload) > c.Config.DumpMaxSize {
 		payload = payload[:c.Config.DumpMaxSize]
 	}
-	c.Info(hex.Dump(payload))
+	c.info(hex.Dump(payload))
 }
 
 func (c *Context) Verbose(format string, v ...interface{}) {

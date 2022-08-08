@@ -18,11 +18,11 @@ func readFile(file string) string {
 func Test_run(t *testing.T) {
 	ctx := context.Background()
 	cfg := tcpdump.NewDefaultConfig()
-	//t.Run("thrift", func(t *testing.T) {
-	//	if err := run(context.Background(), readFile("thrift.pcap"), Thrift, false); err != nil {
-	//		t.Fatal(err)
-	//	}
-	//})
+	t.Run("thrift", func(t *testing.T) {
+		if err := run(ctx, readFile("thrift.pcap"), cfg); err != nil {
+			t.Fatal(err)
+		}
+	})
 	//t.Run("http", func(t *testing.T) {
 	//	if err := run(context.Background(), readFile("http1.1.pcap"), HTTP, false); err != nil {
 	//		t.Fatal(err)
@@ -34,10 +34,10 @@ func Test_run(t *testing.T) {
 	//		t.Fatal(err)
 	//	}
 	//})
-	t.Run("thrift_ttheader2", func(t *testing.T) {
-		// thrift_ttheader
-		if err := run(ctx, readFile("out.pcap"), cfg); err != nil {
-			t.Fatal(err)
-		}
-	})
+	//t.Run("thrift_ttheader2", func(t *testing.T) {
+	//	// thrift_ttheader
+	//	if err := run(ctx, readFile("out.pcap"), cfg); err != nil {
+	//		t.Fatal(err)
+	//	}
+	//})
 }

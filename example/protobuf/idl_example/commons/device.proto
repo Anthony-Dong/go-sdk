@@ -5,12 +5,18 @@ import "api.proto";
 option go_package = "github.com/anthony-dong/go-tool/internal/example/protobuf/idl_example/pb_gen/commons";
 
 message DeviceInfo{
-    option (api.dynamic) = {key: "Asset", value:"AssetMessage"};
-    option (api.dynamic) = {key: "AutoCover", value:"AutoCoverMessage"};
+  option (api.dynamic_field) = {key: "Asset", type:"AssetMessage", key_field:"method", type_field:"payload"};
+  option (api.dynamic_field) = {key: "AutoCover", type:"AutoCoverMessage", key_field:"method", type_field:"payload"};
 
-//  optional int64 Id = 1 [default = 0,
-//    (api.im_message) = {method: "Asset", method_type:"AssetMessage"}
-//  ];
-  optional string Name = 2 [default = ''];
-  map<string, string> Name3 = 3;
+  optional string method = 1;
+  optional bytes payload = 2;
+}
+
+
+message Message{
+  option (api.dynamic_field) = {key: "Asset", type:"AssetMessage", key_field:"method", type_field:"payload"};
+  option (api.dynamic_field) = {key: "AutoCover", type:"AutoCoverMessage", key_field:"method", type_field:"payload"};
+
+  optional string method = 1;
+  optional bytes payload = 2;
 }

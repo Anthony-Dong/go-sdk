@@ -91,7 +91,7 @@ func NewHTTP1Decoder() Decoder {
 					return errors.Wrap(err, `read http request continue content error`)
 				}
 			}
-			ctx.Info(copyR.String())
+			ctx.PrintPayload(copyR.String())
 			return nil
 		}
 
@@ -104,7 +104,7 @@ func NewHTTP1Decoder() Decoder {
 			if err := response.Read(bufReader); err != nil {
 				return errors.Wrap(err, `read http response content error`)
 			}
-			ctx.Info(copyR.String())
+			ctx.PrintPayload(copyR.String())
 			return nil
 		}
 		return errors.Errorf(`invalid http content`)

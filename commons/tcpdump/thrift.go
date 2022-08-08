@@ -2,6 +2,7 @@ package tcpdump
 
 import (
 	"fmt"
+	"github.com/anthony-dong/go-sdk/commons"
 
 	"github.com/anthony-dong/go-sdk/commons/codec/thrift_codec"
 	"github.com/pkg/errors"
@@ -20,7 +21,7 @@ func NewThriftDecoder() Decoder {
 		}
 		result.MetaInfo = thrift_codec.GetMateInfo(ctx)
 		result.Protocol = protocol
-		ctx.InfoJson(result)
+		ctx.PrintPayload(commons.ToPrettyJsonString(result))
 		return nil
 	}
 }

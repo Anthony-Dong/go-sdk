@@ -13,6 +13,9 @@ extend google.protobuf.FieldOptions {
   optional string key = 50102; // http 请求的header 还是哪
   optional bool unbox = 50103; // 是否平铺开结构体，除body外，默认处理第一层
   //  repeated ImMessage im_message = 1;
+
+  optional bool dynamic_key = 50102;
+  optional bool dynamic_type = 50103;
 }
 
 enum HttpSourceType {
@@ -24,9 +27,8 @@ enum HttpSourceType {
 extend google.protobuf.MethodOptions {
   optional HttpMethodType method = 50201; // http method
   optional string path = 50202; // http path
-  repeated string dynamic_key = 50203;
-  repeated string dynamic_value = 50204;
-  optional bool dynamic_response = 50205;
+  repeated DynamicMessage dynamic_request = 50206;
+  repeated DynamicMessage dynamic_response = 50206;
 }
 
 enum HttpMethodType{
@@ -42,13 +44,12 @@ enum HttpMethodType{
 // }
 
 extend google.protobuf.MessageOptions {
-  repeated DynamicMessage dynamic = 1;
+  repeated DynamicMessage dynamic_field = 50506;
 }
 
 message DynamicMessage{
-  optional string method = 1;
-  optional string method_type = 2;
+  optional string key = 1; // 类型key
+  required string type = 2; // 类型格式 .{{package}}.{{message type}}
+  optional string key_field = 3; // key的字段名
+  optional string type_field = 4; // type的字段名
 }
-
-// extend google.protobuf.ServiceOptions {
-// }

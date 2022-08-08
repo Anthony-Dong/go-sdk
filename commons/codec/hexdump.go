@@ -19,9 +19,32 @@ func (hexDumpCodec) Encode(src []byte) []byte {
 	return []byte(hex.Dump(src))
 }
 
+var DefaultHexDumpConfig = hexDumpConfig{
+	HexDataRegexp:   regexp.MustCompile(`^[0-9a-f]+$`),
+	HexSepRegexp:    regexp.MustCompile(`\s+`),
+	HexPrefixRegexp: regexp.MustCompile(`^(0x|00)`),
+}
+
+type hexDumpConfig struct {
+	HexDataRegexp   *regexp.Regexp
+	HexSepRegexp    *regexp.Regexp
+	HexPrefixRegexp *regexp.Regexp
+}
+
 func (hexDumpCodec) Decode(src []byte) ([]byte, error) {
 	scanner := bufio.NewScanner(bytes.NewReader(src))
 	recordData := strings.Builder{}
+
+	for scanner.Scan() {
+		scan := scanner.Text()
+		if data, _ := ReadHexdump(scan); data != "" {
+			recordData.WriteString(data)
+		}
+	}
+	return NewHexCodec().Decode([]byte(recordData.String()))
+}
+
+func ReadHexdump(data string) (string, bool) {
 	trimSpece := func(space []string) []string {
 		result := make([]string, 0, len(space))
 		for _, elem := range space {
@@ -32,29 +55,27 @@ func (hexDumpCodec) Decode(src []byte) ([]byte, error) {
 		}
 		return result
 	}
-	for scanner.Scan() {
-		scan := scanner.Text()
-		compile := regexp.MustCompile(`\s+`)
-		split := compile.Split(scan, -1)
-		split = trimSpece(split)
-		if len(split) == 0 {
+	split := DefaultHexDumpConfig.HexSepRegexp.Split(data, -1)
+	split = trimSpece(split)
+	if len(split) == 0 {
+		return "", false
+	}
+	if !DefaultHexDumpConfig.HexPrefixRegexp.MatchString(split[0]) {
+		return "", false
+	}
+	result := strings.Builder{}
+	size := 0
+	for index, elem := range split {
+		if index == 0 {
 			continue
 		}
-		if !(strings.HasPrefix(split[0], "0x") || strings.HasPrefix(split[0], "0000") || strings.HasPrefix(split[0], "00")) {
-			continue
+		if elem[0] == '|' { // end
+			break
 		}
-		for index, elem := range split {
-			if index == 0 {
-				continue
-			}
-			if elem[0] == '|' { // end
-				break
-			}
-			if len(elem) == 2 && (elem[0] >= '0' && elem[0] <= '9') && (elem[1] >= '0' && elem[1] <= '9') {
-				recordData.WriteString(elem)
-			}
-			//recordData.WriteString(elem)
+		if (len(elem) == 2 || len(elem) == 4) && DefaultHexDumpConfig.HexDataRegexp.MatchString(elem) {
+			result.WriteString(elem)
+			size = size + len(elem)
 		}
 	}
-	return NewHexCodec().Decode([]byte(recordData.String()))
+	return result.String(), size > 1 && size < 16*2
 }
