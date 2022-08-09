@@ -4,13 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
+	"path/filepath"
+
 	"github.com/anthony-dong/go-sdk/commons/codec"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	"github.com/pkg/errors"
-	"io"
-	"path/filepath"
 )
 
 type PacketSource interface {
@@ -71,7 +72,7 @@ func (t *ConsulSource) Read() {
 		t.lines <- c
 		data = data[:0]
 	}
-	for scanner.Scan() {
+	for scanner.Scan() && scanner.Err() == nil {
 		line := scanner.Text()
 		hex, isEnd := codec.ReadHexdump(line)
 		if hex != "" {
@@ -154,9 +155,13 @@ type customPacket struct {
 	notify chan struct{}
 }
 
-type CustomPacket interface {
+type WaitPacket interface {
 	Notify()
 	Wait()
+}
+
+type CustomPacket interface {
+	WaitPacket
 	gopacket.Packet
 }
 

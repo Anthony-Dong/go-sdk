@@ -2,6 +2,7 @@ package tcpdump
 
 import (
 	"fmt"
+
 	"github.com/anthony-dong/go-sdk/commons"
 
 	"github.com/anthony-dong/go-sdk/commons/codec/thrift_codec"

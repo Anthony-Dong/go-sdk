@@ -28,11 +28,13 @@ func NewCmd() (*cobra.Command, error) {
 		filename string
 	)
 	cmd := &cobra.Command{
-		Use:   `tcpdump [-r file] [-v] [-X]`,
+		Use:   `tcpdump [-r file] [-v] [-X] [--max dump size]`,
 		Short: `decode tcpdump file`,
 		Long:  `decode tcpdump file, help doc: https://github.com/Anthony-Dong/go-sdk/tree/master/gtool/tcpdump`,
-		Example: `  step1: tcpdump 'port 8080' -w ~/data/tcpdump.pcap
-  step2: gtool tcpdump -r ~/data/tcpdump.pcap`,
+		Example: `	1. step1: tcpdump 'port 8080' -w ~/data/tcpdump.pcap
+	   step2: gtool tcpdump -r ~/data/tcpdump.pcap
+	2. tcpdump 'port 8080' -X -l -n | gtool tcpdump
+`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), filename, cfg)
 		},
@@ -64,7 +66,7 @@ func run(ctx context.Context, filename string, cfg tcpdump.ContextConfig) error 
 	for data := range source.Packets() {
 		packet := debugPacket(data, decoder)
 		decoder.HandlerPacket(packet)
-		if wait, isOk := data.(CustomPacket); isOk {
+		if wait, isOk := data.(WaitPacket); isOk {
 			wait.Notify()
 		}
 	}
@@ -126,18 +128,10 @@ func debugPacket(packet gopacket.Packet, decoder *tcpdump.Context) tcpdump.Packe
 		return data
 	}
 
-	//decoder.Info(packet.Dump())
+	if packet.TransportLayer() != nil {
+		decoder.Dump(packet.TransportLayer().LayerPayload())
+	}
 	return data
-	// 处理不了的4层
-	//i := 0
-	//for _, l := range packet.Layers() {
-	//	i = i + 1
-	//	if i == 4 {
-	//		break
-	//	}
-	//	decoder.Info("--- Layer %d ---\n%s", i, gopacket.LayerDump(l))
-	//}
-	//decoder.Info("--- Layer 4 ---\n")
 }
 
 func loadTcpFlag(L4 *layers.TCP) []string {

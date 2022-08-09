@@ -22,7 +22,7 @@ func (hexDumpCodec) Encode(src []byte) []byte {
 var DefaultHexDumpConfig = hexDumpConfig{
 	HexDataRegexp:   regexp.MustCompile(`^[0-9a-f]+$`),
 	HexSepRegexp:    regexp.MustCompile(`\s+`),
-	HexPrefixRegexp: regexp.MustCompile(`^(0x|00)`),
+	HexPrefixRegexp: regexp.MustCompile(`^[0-9a-fx]+[0-9a-f:]$`),
 }
 
 type hexDumpConfig struct {

@@ -75,7 +75,10 @@ func (c *Context) PrintPayload(payload string) {
 }
 
 func (c *Context) info(format string, v ...interface{}) {
-	if len(format) != 0 && format[len(format)-1] != '\n' {
+	if format == "" {
+		return
+	}
+	if format[len(format)-1] != '\n' {
 		format = format + "\n"
 	}
 	if len(v) == 0 {

@@ -21,3 +21,5 @@ Hexo:
   KeyWord:
   - xxx
   - xxx
+json:
+  indent: ""

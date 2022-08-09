@@ -6,34 +6,36 @@
 
 注意: 
 
-1. 解析[Thrift协议](https://github.com/Anthony-Dong/go-sdk/tree/master/commons/codec/thrift_codec)是我自己写的, HTTP使用的[FastHTTP](https://github.com/valyala/fasthttp), L2-L7协议解析是用的[Go-Packet](https://github.com/google/gopacket) 
+1. 解析[Thrift协议](https://github.com/Anthony-Dong/go-sdk/tree/master/commons/codec/thrift_codec)是我自己写的, HTTP使用的[FastHTTP](https://github.com/valyala/fasthttp), L2-L7协议解析是用的[Go-Packet](https://github.com/google/gopacket) ！
 2. Go-[Packet](https://www.tcpdump.org/manpages/pcap.3pcap.html) 需要开启`CGO_ENABLED=1`, 由于交叉编译对于CGO支持并不友好, 所以这里如果你想用, 目前仅仅支持[release](https://github.com/Anthony-Dong/go-sdk/releases)中下载 linux & macos 版本, 其他环境可以参考 [如何下载gtool-cli](../)! 
 3. 注意Linux环境需要安装 `libpcap`, 例如我是Debian, 可以执行 `sudo apt-get install libpcap-dev`, 具体可以参考:[pcap.h header file problem](https://stackoverflow.com/questions/5779784/pcap-h-header-file-problem) ! mac 用户不需要！
-4. 解析失败会默认Dump Payload！
+4. 解析失败会默认 Hexdump Application Payload！
 
 ## Feature
 
 - 支持解析TCP的包
 - 支持解析HTTP包(HTTP/1.1 & HTTP/1.0)
 - 支持解析Thrift包
-
-## 技术细节
-1. 由于我们应用层协议已经屏蔽了tcp协议的细节，比如TCP帧，TCP丢包重传等机制，一般应用层协议会处理抓包的粘包问题
-2. 应用层可能会传递大包, 导致TCP传输时会拆分成很多数据包
-3. 对于小包来说，只抓取TCP的ACK&PSH包即可
-4. 难度主要是 重传(sender)、丢包(receiver) 对于不同角色会存在不同的问题, 一般来说假如不存在这种case，我们知道tcp的帧会有seq & ack标识，seq表示已经发出去的数据包，ack表示已经接收到的数据包，也就是对于一个单次请求(Ping)来说，他的ack一定是一个值(对于发送端来说,并且存在单个请求拆分成多个数据包)，seq代表发送的数据包，也就是我们可以根据seq自增避免重传和乱序问题
+- 支持通过管道符进行过滤
 
 ```shell
-➜  gtool tcpdump --help
-Name: decode tcpdump file
+➜  gtool tcpdump -h
+Name: decode tcpdump file, help doc: https://github.com/Anthony-Dong/go-sdk/tree/master/gtool/tcpdump
 
-Usage: gtool tcpdump [-r file] [-t type] [flags]
+Usage: gtool tcpdump [-r file] [-v] [-X] [--max dump size] [flags]
+
+Examples:
+	1. step1: tcpdump 'port 8080' -w ~/data/tcpdump.pcap
+	   step2: gtool tcpdump -r ~/data/tcpdump.pcap
+	2. tcpdump 'port 8080' -X -l -n | gtool tcpdump
+
 
 Options:
-  -r, --file string   Read tcpdump_xxx_file.pcap
+  -X, --dump          Enable Display payload details with hexdump.
+  -r, --file string   The packets file, eg: tcpdump_xxx_file.pcap.
   -h, --help          help for tcpdump
-  -t, --type string   Decode message type: thrift|http
-      --verbose       Turn on verbose mode
+      --max int       The hexdump max size
+  -v, --verbose       Enable Display decoded details.
 
 Global Options:
       --config-file string   set the config file (default "/Users/bytedance/.gtool.yaml")
@@ -42,10 +44,28 @@ Global Options:
 To get more help with gtool, check out our guides at https://github.com/Anthony-Dong/go-sdk
 ```
 
+## 技术细节
+Q: 由于我们应用层协议已经屏蔽了tcp协议的细节，比如TCP重传，TCP Windows Update，TCP Dup ACK！
+
+A: 这里使用一个tricky的逻辑
+
+- 对于重传，也就是当前端（抓包侧），我们可以通过seq id 进行分析，也就是当 seq id 并不是预期的，预期 seq id 应该是我已经发送数据包的id，可以通过上一帧计算所得，当不是的时候，那么就会报错 `Out-Of-Order` ，**并且这里并不会对重传的包进行流量解析**！
+- Windows Update 帧，比较特殊，也就是 相对的 ack & seq 都是1，也就是和上一帧一样
+- TCP Dup ACK 帧，其实是TCP Option，为了避免冗余重传！
+- seq id 表示: 已经发送的数据包（offset+payload size）,特殊情况对于握手帧来说payloadsize 虽然1等于0，但是实际上按照1来处理！
+- ack id 表示: 已经接收到的数据包
+
+Q: 应用层可能会传递大包，导致TCP传输时会拆分成很多数据包，也就会一个帧中的Payload并不能完成解析请求！
+
+A: **wireshark 其实只直接解析单帧数据包**！我这里做的比较tricky的逻辑就是，对于一个PING-PONG 模型来说，那么假设它发送数据包，那么此时TCP流一定未收到数据，也就是ACK ID一样是一样的！这个也就是建立在单连接串行处理请求的情况！**对于多路复用来说可能会存在同时请求包、响应包传递，所以目前不支持这个！**
+
+Q: 何时解析数据包？
+
+A: 其实TCP会有几个帧表示数据帧，对于 PSH 来说是告诉对方有数据要接收，那么一定需要去解析！但是假如大包被拆分成多个帧，那么我们也需要特殊处理！因此对于全部的ACK帧我们都进行了解包！
+
 ## Roadmap
 
 - 支持解析GRPC
-- 通过管道符解析(这样就可以实时转换了, 这里不推荐自己写一个ebpf 接口工具进行解析, tcpdump比较通用)
 
 ## HTTP
 
