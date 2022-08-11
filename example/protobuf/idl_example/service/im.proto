@@ -14,24 +14,5 @@ service ImService {
   rpc GetMessage (im.data.ImMessageRequest) returns (im.data.ImMessageResponse){
     option (api.method) = GET;
     option (api.path) = '/api/v1/im/query';
-    option (api.dynamic_response) = {type:"ErrorResponse"};
   };
-  rpc Test (Request) returns (Response){
-    option (api.post) = '/test';
-    option (api.resp_serializer) = 'json';
-    option (api.dynamic_response) = {type:"ErrorResponse"};
-  };
-}
-
-
-// 正常返回Response
-message Response {
-  string data1 = 1;
-  string data2 = 2;
-}
-
-// 特殊情况下会返回 ErrorResponse
-message ErrorResponse {
-  string msg = 1;
-  int64 code = 2;
 }
