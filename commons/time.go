@@ -8,6 +8,7 @@ import (
 const (
 	FormatTimeV1 = "2006-01-02 15:04:05"
 	FormatTimeV2 = "2006/1-2"
+	FormatTimeV3 = "2006-01-02 15:04:05.000"
 )
 
 // TimeToSeconds 时间之差 s 输出 0.100010s.

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 
+	"github.com/anthony-dong/go-sdk/commons/codec/pb_codec/codec"
+
 	"github.com/anthony-dong/go-sdk/commons"
 )
 
@@ -88,4 +90,8 @@ func (f Field) MarshalText() (text []byte, err error) {
 
 func (t Field) String() string {
 	return commons.ToString(t.FieldId)
+}
+
+func NewBuffer(data []byte) *codec.Buffer {
+	return codec.NewBuffer(data)
 }

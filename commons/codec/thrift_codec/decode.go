@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/anthony-dong/go-sdk/commons/codec/thrift_codec/kitex"
+
 	"github.com/anthony-dong/go-sdk/commons/logs"
 
 	"github.com/anthony-dong/go-sdk/commons"
@@ -21,11 +23,13 @@ type ThriftException struct {
 type ThriftMessage struct {
 	Method      string             `json:"method"`
 	SeqId       int32              `json:"seq_id"`
+	Protocol    Protocol           `json:"protocol"` // set protocol
+	MessageType ThriftTMessageType `json:"message_type"`
 	Payload     *FieldOrderMap     `json:"payload,omitempty"`
 	Exception   *ThriftException   `json:"exception,omitempty"` // MessageType=EXCEPTION 存在异常则是这个字段
-	MessageType ThriftTMessageType `json:"message_type"`
-	Protocol    Protocol           `json:"protocol"` // set protocol
+	MetaInfo    *kitex.MetaInfo    `json:"meta_info,omitempty"`
 }
+
 type ThriftTMessageType thrift.TMessageType
 
 const (
@@ -209,7 +213,6 @@ func DecodeField(ctx context.Context, fieldType thrift.TType, iprot thrift.TProt
 	case thrift.STRUCT:
 		return DecodeStruct(ctx, iprot)
 	default:
-		logs.CtxInfof(ctx, "[DecodeField] can not handler thrift.TType: %s", fieldType)
 		return nil, iprot.Skip(fieldType)
 	}
 }

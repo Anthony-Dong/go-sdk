@@ -1,6 +1,7 @@
 package thrift_codec
 
 import (
+	"bytes"
 	"context"
 	"testing"
 
@@ -30,4 +31,19 @@ func testDecodeMessage(proto Protocol, msgType thrift.TMessageType, msg thrift.T
 	}
 	data.Protocol = proto
 	t.Log(commons.ToPrettyJsonString(data))
+}
+
+func TestDecode(t *testing.T) {
+	proto := UnframedUnStrictBinary
+	data := `AAAAEAABgAAAAAAAABAAAgAWAAEyAAIANTAyMTY1ODM4NjEwMzAwNmZkYmRkYzAyMDBmZjAwMDEwMDAyMDIyNTAxMzcwMjI0OGEwZWFhAQABAFByY2Vzc0F0VGllABAxNjU4Mzg2MTAzMDI3OTI0AAAAgAEAAgAAAFVzZXJQcmZpZQAAAAAAAAEAAAAAAAAAZQMAAgAAAAAA`
+	bData, err := codec.NewBase64Codec().Decode([]byte(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := DecodeMessage(context.Background(), NewTProtocol(bytes.NewReader(bData), proto))
+	if err != nil {
+		t.Fatal(err)
+	}
+	result.Protocol = proto
+	t.Log(commons.ToPrettyJsonString(result))
 }

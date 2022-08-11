@@ -4,9 +4,9 @@ target_file: 427b61ed39c275ae73c22c28d8efd04e.md
 origin_file: hexo.md
 date: "2021-11-21 17:39:10"
 tags:
-    - test
+- test
 categories:
-    - test
+- test
 ---
 
     个人测试笔记
@@ -14,5 +14,3 @@ categories:
 <!-- more -->
 
     xxxxx 正文
-
-

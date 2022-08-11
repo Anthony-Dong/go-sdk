@@ -2,14 +2,16 @@ package codec
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/spf13/cobra"
 
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/anthony-dong/go-sdk/commons/codec/thrift_codec"
-	"github.com/apache/thrift/lib/go/thrift"
 )
 
 //  echo "AAAAEYIhAQRUZXN0HBwWAhUCAAAA" | bin/gtool codec base64 --decode | bin/gtool codec thrift | jq
@@ -33,19 +35,21 @@ func newThriftCodecCmd() (*cobra.Command, error) {
 				}
 				ctx = cmd.Context()
 			)
-			handlerStruct := func(protocol thrift.TProtocol) error {
-				data, err := thrift_codec.DecodeMessage(ctx, protocol)
+			handlerStruct := func(r io.Reader, proto thrift_codec.Protocol) error {
+				data, err := thrift_codec.DecodeMessage(ctx, thrift_codec.NewTProtocol(r, proto))
 				if err != nil {
 					wrapperError(err)
 					return err
 				}
+				data.Protocol = proto
 				_, _ = os.Stdout.WriteString(commons.ToJsonString(data))
 				return nil
 			}
 			switch messageType {
 			case "message":
 				bufReader := bufio.NewReader(os.Stdin)
-				protocol, err := thrift_codec.GetProtocol(bufReader)
+				ctx = thrift_codec.InjectMateInfo(ctx)
+				protocol, err := thrift_codec.GetProtocol(ctx, bufReader)
 				if err != nil {
 					return err
 				}
@@ -53,15 +57,23 @@ func newThriftCodecCmd() (*cobra.Command, error) {
 				if err != nil {
 					return err
 				}
+				data.MetaInfo = thrift_codec.GetMateInfo(ctx)
 				data.Protocol = protocol
 				_, _ = os.Stdout.WriteString(commons.ToJsonString(data))
 				return nil
 			case "struct":
-				if err := handlerStruct(thrift_codec.NewTProtocol(os.Stdin, thrift_codec.UnframedBinary)); err == nil {
-					return err
+				data, _ := ioutil.ReadAll(os.Stdin)
+				if err := handlerStruct(bytes.NewReader(data), thrift_codec.FramedBinary); err == nil {
+					return nil
 				}
-				if err := handlerStruct(thrift_codec.NewTProtocol(os.Stdin, thrift_codec.UnframedCompact)); err == nil {
-					return err
+				if err := handlerStruct(bytes.NewReader(data), thrift_codec.FramedUnStrictBinary); err == nil {
+					return nil
+				}
+				if err := handlerStruct(bytes.NewReader(data), thrift_codec.UnframedBinary); err == nil {
+					return nil
+				}
+				if err := handlerStruct(bytes.NewReader(data), thrift_codec.UnframedCompact); err == nil {
+					return nil
 				}
 			}
 			return result

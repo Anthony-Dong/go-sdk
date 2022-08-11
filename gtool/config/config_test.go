@@ -52,7 +52,7 @@ func TestEncode(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(string(marshal))
-	if err := ioutil.WriteFile(filepath.Join(commons.GetGoProjectDir(), "command/config/gotool.yaml"), marshal, commons.DefaultFileMode); err != nil {
+	if err := ioutil.WriteFile(filepath.Join(commons.GetGoProjectDir(), "config/gotool.yaml"), marshal, commons.DefaultFileMode); err != nil {
 		t.Fatal(err)
 	}
 }
