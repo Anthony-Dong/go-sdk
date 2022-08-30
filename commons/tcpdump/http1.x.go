@@ -46,7 +46,7 @@ func isHttpRequest(ctx context.Context, reader SourceReader) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if method := string(peek[:3]); method == "GET" || method == "POST" {
+	if method := string(peek[:3]); method == "GET" || method == "PUT" {
 		return true, nil
 	}
 	if method := string(peek[:4]); method == "HEAD" || method == "POST" {
