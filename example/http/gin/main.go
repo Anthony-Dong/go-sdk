@@ -18,6 +18,7 @@ func main() {
 			"data": commons.NewString('a', 1024*8),
 		}
 		data := commons.ToJsonString(resp)
+		context.Writer.Header().Set("Transfer-Encoding", "chunked")
 		compress := context.Param("compress")
 		if !http_codec.CheckAcceptEncoding(context.Request.Header, compress) {
 			compress = ""

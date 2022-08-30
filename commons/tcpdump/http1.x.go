@@ -107,6 +107,18 @@ func NewHTTP1Decoder() Decoder {
 			if err != nil {
 				return errors.Wrap(err, `read http response content error`)
 			}
+			if len(resp.TransferEncoding) > 0 && resp.TransferEncoding[0] == "chunked" {
+				chunked, err := http_codec.ReadChunked(bufReader)
+				if err != nil {
+					_ = resp.Body.Close()
+					return errors.Wrap(err, `read http response content error, transfer encoding is chunked`)
+				}
+				_ = resp.Body.Close()
+				buffer := bufutils.NewBufferData(chunked)
+				defer bufutils.ResetBuffer(buffer)
+
+				resp.Body = io.NopCloser(buffer) // copy
+			}
 			if err := adapterDump(ctx, copyR, resp.Header, resp.Body, func() ([]byte, error) {
 				return httputil.DumpResponse(resp, false)
 			}); err != nil {
