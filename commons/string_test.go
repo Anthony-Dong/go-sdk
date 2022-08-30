@@ -56,6 +56,7 @@ func TestFormatFloat(t *testing.T) {
 
 func TestContainsString(t *testing.T) {
 	assert.Equal(t, ContainsString([]string{"1", "2"}, "2"), true)
+	assert.Equal(t, ContainsString([]string{"1", "2"}, "3"), false)
 }
 
 func TestToPrettyJsonString(t *testing.T) {
@@ -110,4 +111,8 @@ func TestUnsafeBytes(t *testing.T) {
 	assert.Equal(t, cap(data), 0)
 	data = append(data, 0)
 	assert.Equal(t, data, []byte{0})
+}
+
+func TestSplitString(t *testing.T) {
+	assert.Equal(t, SplitString(`hello,world, a, ,c`, ","), []string{"hello", "world", "a", "c"})
 }

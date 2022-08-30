@@ -13,7 +13,6 @@ import (
 	"github.com/anthony-dong/go-sdk/commons/internal/unsafe"
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
-	"github.com/thoas/go-funk"
 )
 
 var (
@@ -127,7 +126,12 @@ func FormatFloat(i float64, size int) string {
 }
 
 func ContainsString(str []string, elem string) bool {
-	return funk.Contains(str, elem)
+	for _, v := range str {
+		if v == elem {
+			return true
+		}
+	}
+	return false
 }
 
 func ToJsonString(v interface{}) string {
@@ -182,6 +186,20 @@ func SplitSliceString(slice []string, length int) [][]string {
 			end = len(slice)
 		}
 		result = append(result, slice[x*length:end])
+	}
+	return result
+}
+
+// SplitString trim space
+func SplitString(str string, sep string) []string {
+	split := strings.Split(str, sep)
+	result := make([]string, 0, len(split))
+	for _, elem := range split {
+		elem = strings.TrimSpace(elem)
+		if elem == "" {
+			continue
+		}
+		result = append(result, elem)
 	}
 	return result
 }

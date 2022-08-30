@@ -2,9 +2,10 @@ package codec
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Test_BytesCodec(t *testing.T) {
@@ -67,6 +68,14 @@ func Test_BytesCodec(t *testing.T) {
 		)
 		testBytesCodec(t, NewSnappyCodec(), in)
 		testCodec(t, NewCodec(NewSnappyCodec()), in)
+	})
+
+	t.Run("deflate", func(t *testing.T) {
+		var (
+			in = []byte("hello world")
+		)
+		testBytesCodec(t, NewBytesCodec(NewDeflateCodec()), in)
+		testCodec(t, NewDeflateCodec(), in)
 	})
 
 	t.Run("hexdump", func(t *testing.T) {

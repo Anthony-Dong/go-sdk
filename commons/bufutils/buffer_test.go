@@ -35,3 +35,8 @@ func TestNewBufReader(t *testing.T) {
 		assert.Equal(t, unsafe.Pointer(reader), addr)
 	})
 }
+
+func TestCopyBytes(t *testing.T) {
+	bf := NewBufferData([]byte(`hello world`))
+	assert.Equal(t, CopyBufferBytes(bf), []byte(`hello world`))
+}

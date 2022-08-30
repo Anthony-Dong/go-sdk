@@ -2,6 +2,7 @@ package codec
 
 import (
 	"compress/gzip"
+	"compress/zlib"
 	"io"
 	"io/ioutil"
 	"sync"
@@ -98,6 +99,34 @@ func (_br) Encode(in io.Reader, out io.Writer) error {
 	}
 	defer bufutils.ResetBuffer(reader)
 	if _, err := fasthttp.WriteBrotli(out, reader.Bytes()); err != nil {
+		return err
+	}
+	return nil
+}
+
+func NewDeflateCodec() Codec {
+	return _deflate{}
+}
+
+type _deflate struct {
+}
+
+func (_deflate) Encode(in io.Reader, out io.Writer) error {
+	w := zlib.NewWriter(out)
+	defer w.Close()
+	if _, err := io.Copy(w, in); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (_deflate) Decode(in io.Reader, out io.Writer) error {
+	reader, err := zlib.NewReader(in)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+	if _, err := io.Copy(out, reader); err != nil {
 		return err
 	}
 	return nil

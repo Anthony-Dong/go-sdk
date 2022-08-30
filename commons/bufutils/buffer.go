@@ -101,3 +101,22 @@ func ResetBufReader(buf ...*bufio.Reader) {
 		_bufPool.Put(b)
 	}
 }
+
+func CopyBytes(data []byte) []byte {
+	if data == nil {
+		return nil
+	}
+	if len(data) == 0 {
+		return []byte{}
+	}
+	c := make([]byte, len(data))
+	copy(c, data)
+	return c
+}
+
+func CopyBufferBytes(data *bytes.Buffer) []byte {
+	if data == nil {
+		return nil
+	}
+	return CopyBytes(data.Bytes())
+}

@@ -3,22 +3,14 @@ package tcpdump
 import (
 	"bufio"
 	"bytes"
-	"compress/gzip"
-	"compress/zlib"
 	"context"
 	"io"
 	"net/http"
 	"net/http/httputil"
-	"strings"
-
-	"github.com/dsnet/compress/brotli"
-	"github.com/golang/snappy"
-
-	"github.com/anthony-dong/go-sdk/commons/codec"
 
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
+	"github.com/anthony-dong/go-sdk/commons/codec/http_codec"
 	"github.com/pkg/errors"
-	"github.com/valyala/fasthttp"
 )
 
 // 	MethodGet     = "GET"
@@ -130,7 +122,7 @@ var strCRLF = []byte("\r\n")
 
 func adapterDump(ctx *Context, src *bytes.Buffer, header http.Header, body io.ReadCloser, dumpHeader func() ([]byte, error)) error {
 	defer body.Close()
-	bodyData, err := decodeHttpBody(body, header, false)
+	bodyData, err := http_codec.DecodeHttpBody(body, header, false)
 	if err != nil {
 		ctx.Verbose("[HTTP] decode http body err: %v", err)
 		ctx.PrintPayload(src.String())
@@ -148,99 +140,4 @@ func adapterDump(ctx *Context, src *bytes.Buffer, header http.Header, body io.Re
 	ctx.PrintPayload(string(responseHeader))
 	ctx.PrintPayload(string(bodyData))
 	return nil
-}
-
-// decodeHttpBody https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Content-Encoding
-func decodeHttpBody(r io.Reader, header http.Header, resolveDefault bool) ([]byte, error) {
-	if r == nil {
-		return []byte{}, nil
-	}
-	encoding := header.Get("Content-Encoding")
-	switch encoding {
-	case "gzip":
-		reader, err := gzip.NewReader(r)
-		if err != nil {
-			return nil, err
-		}
-		return io.ReadAll(reader)
-	case "br":
-		reader, err := brotli.NewReader(r, nil)
-		if err != nil {
-			return nil, err
-		}
-		return io.ReadAll(reader)
-	case "deflate":
-		reader, err := zlib.NewReader(r)
-		if err != nil {
-			return nil, err
-		}
-		return io.ReadAll(reader)
-	case "snappy":
-		all, err := io.ReadAll(r)
-		if err != nil {
-			return nil, err
-		}
-		return snappy.Decode(nil, all)
-	default:
-		if resolveDefault {
-			return io.ReadAll(r)
-		}
-		return nil, nil
-	}
-}
-
-func adapterPrint(ctx *Context, resp *fasthttp.Response) []byte {
-	_, encoding := GetResponseHeader(&resp.Header, "Content-Encoding")
-	if encoding == "" {
-		return nil
-	}
-	var body []byte
-	var err error
-	switch encoding {
-	case "snappy":
-		body, err = codec.NewSnappyCodec().Decode(resp.Body())
-	case "br":
-		body, err = resp.BodyUnbrotli()
-	case "gzip":
-		body, err = resp.BodyGunzip()
-	case "deflate":
-		body, err = resp.BodyInflate()
-	}
-	if err != nil {
-		return nil
-	}
-	result := &bytes.Buffer{}
-	result.Write(resp.Header.Header())
-	result.Write(body)
-	return result.Bytes()
-}
-
-func GetResponseHeader(rspHeader *fasthttp.ResponseHeader, key string) (header string, value string) {
-	return getFastHttpHeader(rspHeader.VisitAll, key)
-}
-
-func GetRequestHeader(reqHeader *fasthttp.RequestHeader, key string) (header string, value string) {
-	return getFastHttpHeader(reqHeader.VisitAll, key)
-}
-
-//getFastHttpHeader return real header 和  real value
-func getFastHttpHeader(visit func(func(key, value []byte)), header string) (string, string) {
-	if visit == nil {
-		return "", ""
-	}
-	lowerHeader := strings.ToLower(header)
-
-	hitHeader := ""
-	hitHeaderValue := ""
-
-	visit(func(key, value []byte) {
-		if hitHeader == "" && strings.ToLower(string(key)) == lowerHeader {
-			hitHeader = string(key)
-			hitHeaderValue = string(value)
-		}
-	})
-	if hitHeader != "" {
-		return hitHeader, hitHeaderValue
-	}
-	return "", ""
 }
