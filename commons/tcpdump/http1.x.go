@@ -3,9 +3,16 @@ package tcpdump
 import (
 	"bufio"
 	"bytes"
+	"compress/gzip"
+	"compress/zlib"
 	"context"
 	"io"
+	"net/http"
+	"net/http/httputil"
 	"strings"
+
+	"github.com/dsnet/compress/brotli"
+	"github.com/golang/snappy"
 
 	"github.com/anthony-dong/go-sdk/commons/codec"
 
@@ -87,16 +94,15 @@ func NewHTTP1Decoder() Decoder {
 			return errors.Wrap(err, `read http request content error`)
 		}
 		if isRequest {
-			request := fasthttp.AcquireRequest()
-			if err := request.Read(bufReader); err != nil {
-				return errors.Wrap(err, `read http request content error`)
+			req, err := http.ReadRequest(bufReader)
+			if err != nil {
+				return errors.Wrap(err, `read http request content err`)
 			}
-			if request.MayContinue() {
-				if err := request.ContinueReadBody(bufReader, 0); err != nil {
-					return errors.Wrap(err, `read http request continue content error`)
-				}
+			if err := adapterDump(ctx, copyR, req.Header, req.Body, func() ([]byte, error) {
+				return httputil.DumpRequest(req, false)
+			}); err != nil {
+				return errors.Wrap(err, `dump http request content error`)
 			}
-			ctx.PrintPayload(copyR.String())
 			return nil
 		}
 
@@ -105,14 +111,14 @@ func NewHTTP1Decoder() Decoder {
 			return errors.Wrap(err, `read http response content error`)
 		}
 		if isResponse {
-			response := fasthttp.AcquireResponse()
-			if err := response.Read(bufReader); err != nil {
+			resp, err := http.ReadResponse(bufReader, nil)
+			if err != nil {
 				return errors.Wrap(err, `read http response content error`)
 			}
-			if payload := adapterPrint(ctx, response); payload != nil {
-				ctx.PrintPayload(string(payload))
-			} else {
-				ctx.PrintPayload(copyR.String())
+			if err := adapterDump(ctx, copyR, resp.Header, resp.Body, func() ([]byte, error) {
+				return httputil.DumpResponse(resp, false)
+			}); err != nil {
+				return errors.Wrap(err, `dump http response content error`)
 			}
 			return nil
 		}
@@ -121,6 +127,67 @@ func NewHTTP1Decoder() Decoder {
 }
 
 var strCRLF = []byte("\r\n")
+
+func adapterDump(ctx *Context, src *bytes.Buffer, header http.Header, body io.ReadCloser, dumpHeader func() ([]byte, error)) error {
+	defer body.Close()
+	bodyData, err := decodeHttpBody(body, header, false)
+	if err != nil {
+		ctx.Verbose("[HTTP] decode http body err: %v", err)
+		ctx.PrintPayload(src.String())
+		return nil
+	}
+	if len(bodyData) == 0 {
+		ctx.PrintPayload(src.String())
+		return nil
+	}
+	responseHeader, err := dumpHeader()
+	if err != nil {
+		ctx.PrintPayload(src.String())
+		return nil
+	}
+	ctx.PrintPayload(string(responseHeader))
+	ctx.PrintPayload(string(bodyData))
+	return nil
+}
+
+// decodeHttpBody https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Content-Encoding
+func decodeHttpBody(r io.Reader, header http.Header, resolveDefault bool) ([]byte, error) {
+	if r == nil {
+		return []byte{}, nil
+	}
+	encoding := header.Get("Content-Encoding")
+	switch encoding {
+	case "gzip":
+		reader, err := gzip.NewReader(r)
+		if err != nil {
+			return nil, err
+		}
+		return io.ReadAll(reader)
+	case "br":
+		reader, err := brotli.NewReader(r, nil)
+		if err != nil {
+			return nil, err
+		}
+		return io.ReadAll(reader)
+	case "deflate":
+		reader, err := zlib.NewReader(r)
+		if err != nil {
+			return nil, err
+		}
+		return io.ReadAll(reader)
+	case "snappy":
+		all, err := io.ReadAll(r)
+		if err != nil {
+			return nil, err
+		}
+		return snappy.Decode(nil, all)
+	default:
+		if resolveDefault {
+			return io.ReadAll(r)
+		}
+		return nil, nil
+	}
+}
 
 func adapterPrint(ctx *Context, resp *fasthttp.Response) []byte {
 	_, encoding := GetResponseHeader(&resp.Header, "Content-Encoding")

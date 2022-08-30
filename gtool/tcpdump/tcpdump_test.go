@@ -28,6 +28,11 @@ func Test_DecodeTCPDump(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+	t.Run("stick http", func(t *testing.T) {
+		if err := run(context.Background(), readFile("stick_http1.1.pcap"), cfg); err != nil {
+			t.Fatal(err)
+		}
+	})
 	t.Run("thrift_ttheader", func(t *testing.T) {
 		// thrift_ttheader
 		if err := run(context.Background(), readFile("thrift_ttheader.pcap"), cfg); err != nil {

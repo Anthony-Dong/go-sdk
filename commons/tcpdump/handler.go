@@ -1,7 +1,6 @@
 package tcpdump
 
 import (
-	"bufio"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -179,15 +178,19 @@ func (c *Context) decode(cur []byte, payload []byte, success func()) {
 		if c.index > len(c.decoder)-1 { // end
 			break
 		}
-		buffer := bufutils.NewBuffer()
-		buffer.Write(payload)
-		if err := c.decoder[c.index](c, bufio.NewReader(buffer)); err != nil {
+		buffer := bufutils.NewBufferData(payload)
+		reader := bufutils.NewBufReader(buffer)
+		clean := func() {
+			bufutils.ResetBufReader(reader)
 			bufutils.ResetBuffer(buffer)
+		}
+		if err := c.decoder[c.index](c, reader); err != nil {
+			clean()
 			c.Verbose("[%s] %v", c.decoderName[c.index], err)
 			c.index = c.index + 1
 			continue
 		}
-		bufutils.ResetBuffer(buffer)
+		clean()
 		success()
 		return
 	}

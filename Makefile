@@ -42,7 +42,7 @@ test: ## go test
 	go tool cover -html=cover.out
 
 release: ## release new version
-	@for elem in `find . -name '*.md'`;do sed -i 's/v1.0.1/v1.0.2/g' $$elem ; done
+	@for elem in `find . -name '*.md'`;do sed -i 's/v1.0.3/v1.0.4/g' $$elem ; done
 
 help: ## help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf " \033[36m%-20s\033[0m  %s\n", $$1, $$2}' $(MAKEFILE_LIST)

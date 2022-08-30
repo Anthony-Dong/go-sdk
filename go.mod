@@ -6,6 +6,7 @@ require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/apache/thrift v0.13.0
 	github.com/bytedance/gopkg v0.0.0-20220413063733-65bf48ffb3a7
+	github.com/dsnet/compress v0.0.1
 	github.com/fatih/color v1.13.0
 	github.com/golang/protobuf v1.5.0
 	github.com/golang/snappy v0.0.4
