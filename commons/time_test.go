@@ -16,5 +16,5 @@ func TestFloat642String(t *testing.T) {
 
 func TestString(t *testing.T) {
 	pt, err := strconv.Atoi("")
-	t.Log(pt,err)
+	t.Log(pt, err)
 }

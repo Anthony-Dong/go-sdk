@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.2+incompatible
-	github.com/anthony-dong/go-sdk v0.0.0-20220423155222-042777f402c5
+	github.com/anthony-dong/go-sdk v0.0.0-00010101000000-000000000000
 	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.13.0

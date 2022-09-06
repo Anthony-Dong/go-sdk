@@ -3,6 +3,9 @@ export CGO_ENABLED:=1
 
 all: test build
 
+install:
+	go build -v -ldflags "-s -w" -o bin/gtool main.go
+
 build:
 	bash -x build.sh
 

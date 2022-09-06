@@ -16,14 +16,24 @@
 1. 下载
 
 - 可以前往 [https://github.com/Anthony-Dong/go-sdk/releases](https://github.com/Anthony-Dong/go-sdk/releases) 进行下载
-- 本地有Go运行环境:  `GO111MODCE="on" CGO_ENABLED=1  go get -v github.com/anthony-dong/go-sdk/gtool` 进行下载 ！
-- linux 下载 or 升级
+- 源码编译，下载代码， 然后`make install` 即可！
+
+```shell
+cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/archive/refs/tags/v1.0.4.tar.gz ; tar -zxvf v1.0.4.tar.gz ; cd go-sdk-1.0.4; make ; mv -f ./bin/gtool `go env GOPATH`/bin ; gtool -v
+```
+
+- Linux 升级
 
 ```shell
 cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.4/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin ; cd - ; gtool -v
 ```
 
-- windows or 其他环境, 下载源码自行构建, 执行 `make build_tool` 即可！
+- Linux 下载
+
+```shell
+wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.4/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; bin/gtool -v
+```
+
 - doc: https://pkg.go.dev/github.com/anthony-dong/go-sdk/gtool
 
 2. 文档: [gtool 文档](./gtool)
