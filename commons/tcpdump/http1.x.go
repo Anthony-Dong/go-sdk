@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 
@@ -116,8 +117,7 @@ func NewHTTP1Decoder() Decoder {
 				_ = resp.Body.Close()
 				buffer := bufutils.NewBufferData(chunked)
 				defer bufutils.ResetBuffer(buffer)
-
-				resp.Body = io.NopCloser(buffer) // copy
+				resp.Body = ioutil.NopCloser(buffer) // copy
 			}
 			if err := adapterDump(ctx, copyR, resp.Header, resp.Body, func() ([]byte, error) {
 				return httputil.DumpResponse(resp, false)

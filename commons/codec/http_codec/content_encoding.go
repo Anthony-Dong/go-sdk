@@ -2,6 +2,7 @@ package http_codec
 
 import (
 	"io"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/anthony-dong/go-sdk/commons"
@@ -40,7 +41,7 @@ func DecodeHttpBody(r io.Reader, header http.Header, resolveDefault bool) ([]byt
 		decoder = codec.NewCodec(codec.NewSnappyCodec())
 	default:
 		if resolveDefault {
-			return io.ReadAll(r)
+			return ioutil.ReadAll(r)
 		}
 		return nil, nil
 	}
