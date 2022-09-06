@@ -24,7 +24,12 @@ func Test_DecodeTCPDump(t *testing.T) {
 		}
 	})
 	t.Run("http", func(t *testing.T) {
-		if err := run(context.Background(), readFile("out_chunked.pcap"), cfg); err != nil {
+		if err := run(context.Background(), readFile("http1.1.pcap"), cfg); err != nil {
+			t.Fatal(err)
+		}
+	})
+	t.Run("http chunked", func(t *testing.T) {
+		if err := run(context.Background(), readFile("http1.1_chunked.pcap"), cfg); err != nil {
 			t.Fatal(err)
 		}
 	})
