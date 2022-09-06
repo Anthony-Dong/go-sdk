@@ -14,7 +14,6 @@ require (
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.1
-	github.com/thoas/go-funk v0.9.2
 	github.com/valyala/fasthttp v1.35.0
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect

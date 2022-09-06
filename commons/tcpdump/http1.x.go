@@ -5,13 +5,12 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"strings"
-
-	"github.com/anthony-dong/go-sdk/commons/codec"
+	"net/http"
+	"net/http/httputil"
 
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
+	"github.com/anthony-dong/go-sdk/commons/codec/http_codec"
 	"github.com/pkg/errors"
-	"github.com/valyala/fasthttp"
 )
 
 // 	MethodGet     = "GET"
@@ -39,7 +38,7 @@ func isHttpRequest(ctx context.Context, reader SourceReader) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if method := string(peek[:3]); method == "GET" || method == "POST" {
+	if method := string(peek[:3]); method == "GET" || method == "PUT" {
 		return true, nil
 	}
 	if method := string(peek[:4]); method == "HEAD" || method == "POST" {
@@ -87,16 +86,15 @@ func NewHTTP1Decoder() Decoder {
 			return errors.Wrap(err, `read http request content error`)
 		}
 		if isRequest {
-			request := fasthttp.AcquireRequest()
-			if err := request.Read(bufReader); err != nil {
-				return errors.Wrap(err, `read http request content error`)
+			req, err := http.ReadRequest(bufReader)
+			if err != nil {
+				return errors.Wrap(err, `read http request content err`)
 			}
-			if request.MayContinue() {
-				if err := request.ContinueReadBody(bufReader, 0); err != nil {
-					return errors.Wrap(err, `read http request continue content error`)
-				}
+			if err := adapterDump(ctx, copyR, req.Header, req.Body, func() ([]byte, error) {
+				return httputil.DumpRequest(req, false)
+			}); err != nil {
+				return errors.Wrap(err, `dump http request content error`)
 			}
-			ctx.PrintPayload(copyR.String())
 			return nil
 		}
 
@@ -105,14 +103,26 @@ func NewHTTP1Decoder() Decoder {
 			return errors.Wrap(err, `read http response content error`)
 		}
 		if isResponse {
-			response := fasthttp.AcquireResponse()
-			if err := response.Read(bufReader); err != nil {
+			resp, err := http.ReadResponse(bufReader, nil)
+			if err != nil {
 				return errors.Wrap(err, `read http response content error`)
 			}
-			if payload := adapterPrint(ctx, response); payload != nil {
-				ctx.PrintPayload(string(payload))
-			} else {
-				ctx.PrintPayload(copyR.String())
+			if len(resp.TransferEncoding) > 0 && resp.TransferEncoding[0] == "chunked" {
+				chunked, err := http_codec.ReadChunked(bufReader)
+				if err != nil {
+					_ = resp.Body.Close()
+					return errors.Wrap(err, `read http response content error, transfer encoding is chunked`)
+				}
+				_ = resp.Body.Close()
+				buffer := bufutils.NewBufferData(chunked)
+				defer bufutils.ResetBuffer(buffer)
+
+				resp.Body = io.NopCloser(buffer) // copy
+			}
+			if err := adapterDump(ctx, copyR, resp.Header, resp.Body, func() ([]byte, error) {
+				return httputil.DumpResponse(resp, false)
+			}); err != nil {
+				return errors.Wrap(err, `dump http response content error`)
 			}
 			return nil
 		}
@@ -122,58 +132,24 @@ func NewHTTP1Decoder() Decoder {
 
 var strCRLF = []byte("\r\n")
 
-func adapterPrint(ctx *Context, resp *fasthttp.Response) []byte {
-	_, encoding := GetResponseHeader(&resp.Header, "Content-Encoding")
-	if encoding == "" {
-		return nil
-	}
-	var body []byte
-	var err error
-	switch encoding {
-	case "snappy":
-		body, err = codec.NewSnappyCodec().Decode(resp.Body())
-	case "br":
-		body, err = resp.BodyUnbrotli()
-	case "gzip":
-		body, err = resp.BodyGunzip()
-	case "deflate":
-		body, err = resp.BodyInflate()
-	}
+func adapterDump(ctx *Context, src *bytes.Buffer, header http.Header, body io.ReadCloser, dumpHeader func() ([]byte, error)) error {
+	defer body.Close()
+	bodyData, err := http_codec.DecodeHttpBody(body, header, false)
 	if err != nil {
+		ctx.Verbose("[HTTP] decode http body err: %v", err)
+		ctx.PrintPayload(src.String())
 		return nil
 	}
-	result := &bytes.Buffer{}
-	result.Write(resp.Header.Header())
-	result.Write(body)
-	return result.Bytes()
-}
-
-func GetResponseHeader(rspHeader *fasthttp.ResponseHeader, key string) (header string, value string) {
-	return getFastHttpHeader(rspHeader.VisitAll, key)
-}
-
-func GetRequestHeader(reqHeader *fasthttp.RequestHeader, key string) (header string, value string) {
-	return getFastHttpHeader(reqHeader.VisitAll, key)
-}
-
-//getFastHttpHeader return real header 和  real value
-func getFastHttpHeader(visit func(func(key, value []byte)), header string) (string, string) {
-	if visit == nil {
-		return "", ""
+	if len(bodyData) == 0 {
+		ctx.PrintPayload(src.String())
+		return nil
 	}
-	lowerHeader := strings.ToLower(header)
-
-	hitHeader := ""
-	hitHeaderValue := ""
-
-	visit(func(key, value []byte) {
-		if hitHeader == "" && strings.ToLower(string(key)) == lowerHeader {
-			hitHeader = string(key)
-			hitHeaderValue = string(value)
-		}
-	})
-	if hitHeader != "" {
-		return hitHeader, hitHeaderValue
+	responseHeader, err := dumpHeader()
+	if err != nil {
+		ctx.PrintPayload(src.String())
+		return nil
 	}
-	return "", ""
+	ctx.PrintPayload(string(responseHeader))
+	ctx.PrintPayload(string(bodyData))
+	return nil
 }

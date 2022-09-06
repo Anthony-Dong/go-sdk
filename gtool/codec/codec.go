@@ -26,6 +26,7 @@ func NewCmd() (*cobra.Command, error) {
 	cmd.AddCommand(newCodecCmd("gizp", codec.NewGzipCodec()))
 	cmd.AddCommand(newCodecCmd("base64", codec.NewCodec(codec.NewBase64Codec())))
 	cmd.AddCommand(newCodecCmd("br", codec.NewBrCodec()))
+	cmd.AddCommand(newCodecCmd("deflate", codec.NewDeflateCodec()))
 	cmd.AddCommand(newCodecCmd("snappy", codec.NewCodec(codec.NewSnappyCodec())))
 	cmd.AddCommand(newCodecCmd("md5", codec.NewCodec(codec.NewMd5Codec())))
 	cmd.AddCommand(newCodecCmd("url", codec.NewCodec(codec.NewUrlCodec())))

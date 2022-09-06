@@ -1,6 +1,7 @@
 package bufutils
 
 import (
+	"bufio"
 	"bytes"
 	"io"
 	"sync"
@@ -76,4 +77,46 @@ func (c *copyWriter) Write(p []byte) (n int, err error) {
 		}
 	}
 	return
+}
+
+const defaultBufReaderSize = 1 << 20 // 1m
+var _bufPool = sync.Pool{
+	New: func() interface{} {
+		return bufio.NewReaderSize(nil, defaultBufReaderSize) // large buf size can fix https://github.com/golang/go/issues/14121
+	},
+}
+
+func NewBufReader(r io.Reader) *bufio.Reader {
+	buf := _bufPool.Get().(*bufio.Reader)
+	buf.Reset(r)
+	return buf
+}
+
+func ResetBufReader(buf ...*bufio.Reader) {
+	for _, b := range buf {
+		if b == nil {
+			continue
+		}
+		b.Reset(nil) // 解决 reader 的引用
+		_bufPool.Put(b)
+	}
+}
+
+func CopyBytes(data []byte) []byte {
+	if data == nil {
+		return nil
+	}
+	if len(data) == 0 {
+		return []byte{}
+	}
+	c := make([]byte, len(data))
+	copy(c, data)
+	return c
+}
+
+func CopyBufferBytes(data *bytes.Buffer) []byte {
+	if data == nil {
+		return nil
+	}
+	return CopyBytes(data.Bytes())
 }
