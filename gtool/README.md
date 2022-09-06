@@ -12,6 +12,12 @@
 cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.4/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin ; cd - ; gtool -v
 ```
 
+or
+
+```shell
+wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.4/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; bin/gtool -v
+```
+
 - windows or 其他环境, 下载源码自行构建, 执行 `make build_tool` 即可！
 - doc: https://pkg.go.dev/github.com/anthony-dong/go-sdk/gtool
 
