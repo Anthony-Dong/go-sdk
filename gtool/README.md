@@ -8,19 +8,19 @@
 - 源码编译，下载代码， 然后`make install` 即可！
 
 ```shell
-cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/archive/refs/tags/v1.0.4.tar.gz ; tar -zxvf v1.0.4.tar.gz ; cd go-sdk-1.0.4; make ; mv -f ./bin/gtool `go env GOPATH`/bin ; gtool -v
+cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/archive/refs/tags/v1.0.5.tar.gz ; tar -zxvf v1.0.5.tar.gz ; cd go-sdk-1.0.5; make ; mv -f ./bin/gtool `go env GOPATH`/bin ; gtool -v
 ```
 
 - Linux 升级
 
 ```shell
-cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.4/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin ; cd - ; gtool -v
+cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.5/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin ; cd - ; gtool -v
 ```
 
 - Linux 下载
 
 ```shell
-wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.4/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; bin/gtool -v
+wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.5/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; bin/gtool -v
 ```
 
 - doc: https://pkg.go.dev/github.com/anthony-dong/go-sdk/gtool

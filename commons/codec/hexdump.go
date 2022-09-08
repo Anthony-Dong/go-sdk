@@ -52,9 +52,12 @@ func (hexDumpCodec) Decode(src []byte) ([]byte, error) {
 //	0x0040:  eafc b760 eafc b760                      ...`...`
 var spaceRegexp = regexp.MustCompile(`\s+`)
 
-func ReadHexdump(line string) (string, bool) {
+// ReadHexdump return data & is_end, isEnd如果是true表示结束, 大部分情况可以不用
+func ReadHexdump(line string) (_ string, isEnd bool) {
 	line = commons.TrimLeftSpace(line) // must trim space
-
+	if line == "" {
+		return "", false
+	}
 	peekHeader := func(str string) (int, string) {
 		result := strings.Builder{}
 		for index, elem := range str {
@@ -105,8 +108,8 @@ func ReadHexdump(line string) (string, bool) {
 		break
 	}
 	rs := result.String()
-	if len(rs) > 0 && len(rs) <= 32 && len(rs)%2 == 0 {
-		return rs, true
+	if len(rs) > 1 && len(rs) <= 32 && len(rs)%2 == 0 {
+		return rs, len(rs) < 32
 	}
 	return "", false
 }
