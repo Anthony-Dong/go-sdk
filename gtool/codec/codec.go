@@ -7,9 +7,10 @@ import (
 
 	"github.com/anthony-dong/go-sdk/commons"
 
+	"github.com/spf13/cobra"
+
 	"github.com/anthony-dong/go-sdk/commons/codec"
 	"github.com/anthony-dong/go-sdk/gtool/utils"
-	"github.com/spf13/cobra"
 )
 
 func NewCmd() (*cobra.Command, error) {

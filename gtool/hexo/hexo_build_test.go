@@ -6,10 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/anthony-dong/go-sdk/commons"
-	"github.com/anthony-dong/go-sdk/gtool/config"
 	git "github.com/sabhiram/go-gitignore"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anthony-dong/go-sdk/commons"
+	"github.com/anthony-dong/go-sdk/gtool/config"
 )
 
 func TestGetAllPage(t *testing.T) {
@@ -21,7 +22,6 @@ func TestGetAllPage(t *testing.T) {
 	for _, elem := range list {
 		t.Log(elem)
 	}
-
 }
 func TestLines(t *testing.T) {
 	t.Run("绝对路径", func(t *testing.T) {

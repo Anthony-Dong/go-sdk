@@ -7,9 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/anthony-dong/go-sdk/commons/logs"
-	"gopkg.in/yaml.v2"
 )
 
 var (

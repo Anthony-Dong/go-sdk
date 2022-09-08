@@ -17,8 +17,9 @@ import (
 
 	"github.com/anthony-dong/go-sdk/gtool/config"
 
-	"github.com/anthony-dong/go-sdk/gtool/utils"
 	"github.com/spf13/cobra"
+
+	"github.com/anthony-dong/go-sdk/gtool/utils"
 )
 
 func NewCmd() (*cobra.Command, error) {

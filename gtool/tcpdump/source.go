@@ -7,11 +7,12 @@ import (
 	"io"
 	"path/filepath"
 
-	"github.com/anthony-dong/go-sdk/commons/codec"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	"github.com/pkg/errors"
+
+	"github.com/anthony-dong/go-sdk/commons/codec"
 )
 
 type PacketSource interface {

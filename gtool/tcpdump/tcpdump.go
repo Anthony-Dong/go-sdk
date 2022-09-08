@@ -9,10 +9,11 @@ import (
 
 	"github.com/anthony-dong/go-sdk/commons/tcpdump"
 
-	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/spf13/cobra"
+
+	"github.com/anthony-dong/go-sdk/commons"
 )
 
 type MsgType string
