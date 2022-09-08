@@ -72,14 +72,14 @@ func (c *uploadCommand) Run(ctx context.Context) error {
 		return errors.Errorf(`invalid bucket type, type: %s`, c.OssConfigType)
 	}
 	_, suffix := commons.GetFilePrefixAndSuffix(c.File)
-	name, err := c.getFileName(c.File)
+	prefix, err := c.getFileName(c.File)
 	if err != nil {
 		return errors.Errorf(`new file name err, err: %v`, err)
 	}
 	fileInfo := OssUploadFile{
 		LocalFile:  c.File,
 		SaveDir:    time.Now().Format(commons.FormatTimeV2),
-		FilePrefix: name,
+		FilePrefix: prefix,
 		FileSuffix: suffix,
 		DstFile:    c.DstFile,
 	}
