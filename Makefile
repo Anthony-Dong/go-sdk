@@ -41,7 +41,7 @@ check: ## check custom rule
 
 test: ## go test
 	go test -coverprofile cover.out -count=1 ./...
-	go tool cover -html=cover.out
+	#go tool cover -html=cover.out
 
 test_gtool: ## go test gtool
 	cd gtool; make test
