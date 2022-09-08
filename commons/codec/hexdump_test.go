@@ -43,11 +43,24 @@ func isEqual(str1, str2 string) bool {
 }
 
 func testIsHex(t testing.TB, k, v string, isCheck bool) {
-	hexdump, isOk := ReadHexdump(k)
+	hexdump, isEnd := ReadHexdump(k)
 	if !isCheck {
 		return
 	}
-	assert.Equal(t, isOk, len(v) > 0, k)
+	if v == "" || hexdump == "" {
+		assert.Equal(t, v, "")
+		assert.Equal(t, hexdump, "")
+		assert.Equal(t, isEnd, false)
+		return
+	}
+	vs := strings.Builder{}
+	for _, elem := range v {
+		if unicode.IsSpace(elem) {
+			continue
+		}
+		vs.WriteRune(elem)
+	}
+	assert.Equal(t, isEnd, len(vs.String()) < 32, k)
 	assert.Equal(t, isEqual(hexdump, v), true, k)
 }
 
