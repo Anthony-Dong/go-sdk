@@ -93,5 +93,4 @@ func TestPeek(t *testing.T) {
 		}
 		assert.Equal(t, string(peek), `hello world`)
 	})
-
 }

@@ -6,11 +6,12 @@ import (
 	"math"
 	"testing"
 
+	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
+
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/anthony-dong/go-sdk/commons/codec/pb_codec/codec"
 	"github.com/anthony-dong/go-sdk/commons/codec/pb_codec/test"
-	"github.com/golang/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 func NewPB2Data(t *testing.T) []byte {
@@ -38,13 +39,13 @@ func NewPB2Data(t *testing.T) []byte {
 			},
 		},
 		TMapObj: map[string]*test.TestPB2Data{
-			"k1": &test.TestPB2Data{
+			"k1": {
 				TString: commons.StringPtr("1234"),
 				TInt64:  commons.Int64Ptr(1),
 				TBool:   commons.BoolPtr(false),
 				TFix64:  commons.Uint64Ptr(1),
 			},
-			"k2": &test.TestPB2Data{
+			"k2": {
 				TString: commons.StringPtr("k2"),
 				TInt64:  commons.Int64Ptr(2),
 				TBool:   commons.BoolPtr(true),
@@ -100,13 +101,13 @@ func NewPB3Data(t *testing.T) []byte {
 			},
 		},
 		TMapObj: map[string]*test.TestPB3Data{
-			"k1": &test.TestPB3Data{
+			"k1": {
 				TString: "1234",
 				TInt64:  1,
 				TBool:   false,
 				TFix64:  1,
 			},
-			"k2": &test.TestPB3Data{
+			"k2": {
 				TString: "k2",
 				TInt64:  2,
 				TBool:   true,

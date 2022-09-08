@@ -9,9 +9,10 @@ import (
 	"net/http"
 	"net/http/httputil"
 
+	"github.com/pkg/errors"
+
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
 	"github.com/anthony-dong/go-sdk/commons/codec/http_codec"
-	"github.com/pkg/errors"
 )
 
 // 	MethodGet     = "GET"

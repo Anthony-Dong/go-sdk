@@ -9,9 +9,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
+
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/anthony-dong/go-sdk/commons/codec/pb_codec/codec"
-	"github.com/golang/protobuf/proto"
 )
 
 func DecodeMessage(ctx context.Context, read *codec.Buffer) (data interface{}, err error) {

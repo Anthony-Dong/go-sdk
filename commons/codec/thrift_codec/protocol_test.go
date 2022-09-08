@@ -9,12 +9,13 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
 	"github.com/anthony-dong/go-sdk/commons/codec"
 	"github.com/anthony-dong/go-sdk/commons/codec/thrift_codec/test/thriftstruct"
-	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNewTBinaryProtocol(t *testing.T) {

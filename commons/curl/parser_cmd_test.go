@@ -92,7 +92,6 @@ func TestToHttpInfo(t *testing.T) {
 		t.Logf("header: %v\n", info.Header)
 		t.Logf("body: %#v", info.Body)
 	}
-
 }
 
 func TestName(t *testing.T) {

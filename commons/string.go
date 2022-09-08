@@ -8,12 +8,13 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/google/uuid"
+	"github.com/gosimple/slug"
+
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
 
 	"github.com/anthony-dong/go-sdk/commons/internal/prettyjson"
 	"github.com/anthony-dong/go-sdk/commons/internal/unsafe"
-	"github.com/google/uuid"
-	"github.com/gosimple/slug"
 )
 
 var (
