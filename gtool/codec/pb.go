@@ -5,10 +5,11 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/anthony-dong/go-sdk/commons/codec/pb_codec"
 	"github.com/anthony-dong/go-sdk/commons/codec/pb_codec/codec"
-	"github.com/spf13/cobra"
 )
 
 //  echo "CgVoZWxsbxCIBEIDCIgE" | bin/gtool codec base64 --decode | bin/gtool codec pb | jq

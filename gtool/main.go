@@ -10,12 +10,13 @@ import (
 	"github.com/anthony-dong/go-sdk/commons/logs"
 	"github.com/anthony-dong/go-sdk/gtool/config"
 
+	"github.com/spf13/cobra"
+
 	"github.com/anthony-dong/go-sdk/gtool/codec"
 	"github.com/anthony-dong/go-sdk/gtool/hexo"
 	"github.com/anthony-dong/go-sdk/gtool/json_tool"
 	"github.com/anthony-dong/go-sdk/gtool/upload"
 	"github.com/anthony-dong/go-sdk/gtool/utils"
-	"github.com/spf13/cobra"
 )
 
 const (

@@ -11,10 +11,11 @@ import (
 
 	"github.com/spf13/cobra"
 
+	git "github.com/sabhiram/go-gitignore"
+
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/anthony-dong/go-sdk/commons/codec"
 	"github.com/anthony-dong/go-sdk/commons/logs"
-	git "github.com/sabhiram/go-gitignore"
 )
 
 const (

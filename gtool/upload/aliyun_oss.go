@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
+
 	"github.com/anthony-dong/go-sdk/gtool/config"
 )
 

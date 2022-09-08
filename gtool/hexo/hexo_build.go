@@ -10,12 +10,13 @@ import (
 	"strings"
 	"sync"
 
+	git "github.com/sabhiram/go-gitignore"
+	"gopkg.in/yaml.v2"
+
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/anthony-dong/go-sdk/commons/codec"
 	"github.com/anthony-dong/go-sdk/commons/collections"
 	"github.com/anthony-dong/go-sdk/commons/logs"
-	git "github.com/sabhiram/go-gitignore"
-	"gopkg.in/yaml.v2"
 )
 
 const (

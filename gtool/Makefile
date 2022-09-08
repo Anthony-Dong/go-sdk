@@ -15,6 +15,6 @@ test:
 	go test -v -run=TestNewConsulSource ./tcpdump >> tcpdump.log
 	go test -coverprofile cover.out -count=1 ./...
 
-.PHONY: test_show
-test_show:
-	go tool cover -html=cover.out
+.PHONY : fmt
+fmt: ## fmt
+	golangci-lint run  --fix -v

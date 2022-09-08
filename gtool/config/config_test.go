@@ -5,8 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/anthony-dong/go-sdk/commons"
 	"gopkg.in/yaml.v2"
+
+	"github.com/anthony-dong/go-sdk/commons"
 )
 
 func TestDecode(t *testing.T) {

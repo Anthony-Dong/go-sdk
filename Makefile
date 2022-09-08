@@ -34,6 +34,7 @@ build: ## gtool build
 .PHONY : fmt
 fmt: ## fmt
 	golangci-lint run  --fix -v
+	make -C gtool fmt
 
 .PHONY : check
 check: ## check custom rule
