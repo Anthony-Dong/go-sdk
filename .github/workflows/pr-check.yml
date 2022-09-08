@@ -15,5 +15,10 @@ jobs:
         run: sudo apt-get update; sudo apt-get install libpcap-dev
       - name: Show Project ...
         run: ls -al
-      - name: Deploy
-        run: tar -zxvf gtool/tcpdump/test/test.tgz; make deploy
+      - name: CI
+        run: make ci
+      - name: Golangci Lint
+        # https://golangci-lint.run/
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest

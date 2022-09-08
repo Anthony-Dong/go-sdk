@@ -1,17 +1,20 @@
-.PHONY: all test build
 export CGO_ENABLED:=1
 
+.PHONY: all
 all: test build
 
-install:
-	go build -v -ldflags "-s -w" -o bin/gtool main.go
-
+.PHONY: build
 build:
 	bash -x build.sh
 
+.PHONY: test
 test:
+	make -C tcpdump/test un_compress
 	go test -v -run=Test_DecodeTCPDump ./tcpdump > tcpdump.log
 	echo "follow form console log...." >> tcpdump.log
 	go test -v -run=TestNewConsulSource ./tcpdump >> tcpdump.log
 	go test -coverprofile cover.out -count=1 ./...
-	#go tool cover -html=cover.out
+
+.PHONY: test_show
+test_show:
+	go tool cover -html=cover.out
