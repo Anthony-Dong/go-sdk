@@ -3,6 +3,7 @@ package upload
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"time"
 
@@ -16,9 +17,10 @@ import (
 )
 
 type uploadCommand struct {
-	OssConfigType  string `json:"type"`
-	File           string `json:"file"`
-	FileNameDecode string `json:"decode"`
+	OssConfigType  string `json:"type,omitempty"`
+	File           string `json:"file,omitempty"`
+	FileNameDecode string `json:"decode,omitempty"`
+	DstFile        string `json:"dst_file,omitempty"`
 }
 
 func NewCmd() (*cobra.Command, error) {
@@ -29,6 +31,7 @@ func NewCmd() (*cobra.Command, error) {
 	cmd.Flags().StringVarP(&cfg.File, "file", "f", "", "Set the local path of upload file")
 	cmd.Flags().StringVarP(&cfg.FileNameDecode, "decode", "d", "uuid", "Set the upload file name decode method (uuid|url|md5)")
 	cmd.Flags().StringVarP(&cfg.OssConfigType, "type", "t", "default", "Set the upload config type")
+	cmd.Flags().StringVar(&cfg.DstFile, "dst", "", "Set the dst file name")
 	if err := cmd.MarkFlagRequired("file"); err != nil {
 		return nil, err
 	}
@@ -64,13 +67,21 @@ func (c *uploadCommand) Run(ctx context.Context) error {
 	if len(commandConfig.Upload.Bucket) == 0 {
 		return errors.Errorf("not found bucket config, bucket: %s", c.OssConfigType)
 	}
-	cfg := commandConfig.Upload.Bucket[c.OssConfigType]
-	prefix, suffix := commons.GetFilePrefixAndSuffix(c.File)
+	cfg, isExist := commandConfig.Upload.Bucket[c.OssConfigType]
+	if !isExist {
+		return errors.Errorf(`invalid bucket type, type: %s`, c.OssConfigType)
+	}
+	_, suffix := commons.GetFilePrefixAndSuffix(c.File)
+	name, err := c.getFileName(c.File)
+	if err != nil {
+		return errors.Errorf(`new file name err, err: %v`, err)
+	}
 	fileInfo := OssUploadFile{
 		LocalFile:  c.File,
 		SaveDir:    time.Now().Format(commons.FormatTimeV2),
-		FilePrefix: c.getFileName(prefix),
+		FilePrefix: name,
 		FileSuffix: suffix,
+		DstFile:    c.DstFile,
 	}
 	bucket, err := NewBucket(&cfg)
 	if err != nil {
@@ -88,14 +99,19 @@ func (c *uploadCommand) Run(ctx context.Context) error {
 	return nil
 }
 
-func (c *uploadCommand) getFileName(fileName string) string {
+func (c *uploadCommand) getFileName(filename string) (string, error) {
 	switch c.FileNameDecode {
 	case "uuid":
-		return commons.GenerateUUID()
+		return commons.GenerateUUID(), nil
 	case "url":
-		return string(codec.NewUrlCodec().Encode(codec.String2Slice(fileName)))
+		prefix, _ := commons.GetFilePrefixAndSuffix(filename)
+		return string(codec.NewUrlCodec().Encode([]byte(prefix))), nil
 	case "md5":
-		return string(codec.NewMd5Codec().Encode(codec.String2Slice(fileName)))
+		content, err := ioutil.ReadFile(filename)
+		if err != nil {
+			return "", fmt.Errorf(`read file: %s find err: %v`, filename, err)
+		}
+		return string(codec.NewMd5Codec().Encode(content)), nil
 	}
-	return commons.GenerateUUID()
+	return commons.GenerateUUID(), nil
 }
