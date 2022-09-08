@@ -4,8 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/anthony-dong/go-sdk/commons/bufutils"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anthony-dong/go-sdk/commons/bufutils"
 )
 
 func Test_BytesCodec(t *testing.T) {

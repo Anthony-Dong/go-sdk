@@ -10,8 +10,9 @@ import (
 
 	"github.com/anthony-dong/go-sdk/commons/logs"
 
-	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/apache/thrift/lib/go/thrift"
+
+	"github.com/anthony-dong/go-sdk/commons"
 )
 
 type ThriftException struct {

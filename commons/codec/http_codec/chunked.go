@@ -3,8 +3,9 @@ package http_codec
 import (
 	"io"
 
-	"github.com/anthony-dong/go-sdk/commons/bufutils"
 	"github.com/valyala/fasthttp"
+
+	"github.com/anthony-dong/go-sdk/commons/bufutils"
 )
 
 func ReadChunked(r io.Reader) ([]byte, error) {

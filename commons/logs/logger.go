@@ -41,7 +41,7 @@ func (l Level) String() string {
 	if level != "" {
 		return level
 	}
-	return fmt.Sprintf("unknown")
+	return "unknown"
 }
 
 type logger struct {

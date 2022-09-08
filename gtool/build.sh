@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -ex
+set -e
 
 DIR=$(cd "$(dirname "${0}")" || exit 1; pwd)
 ARCH=$(go env GOHOSTARCH)

@@ -8,8 +8,9 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/anthony-dong/go-sdk/commons/bufutils"
 	"github.com/fatih/color"
+
+	"github.com/anthony-dong/go-sdk/commons/bufutils"
 )
 
 type Decoder func(ctx *Context, reader SourceReader) error
@@ -142,7 +143,7 @@ func (c *Context) findNext(p *Packet) bool {
 	if c.packets[key] == nil {
 		return false
 	}
-	for ack, _ := range c.packets[key] {
+	for ack := range c.packets[key] {
 		if ack > p.ACK {
 			return true
 		}

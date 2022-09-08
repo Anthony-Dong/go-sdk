@@ -8,9 +8,10 @@ import (
 	"sync"
 
 	"github.com/andybalholm/brotli"
-	"github.com/anthony-dong/go-sdk/commons/bufutils"
 	"github.com/golang/snappy"
 	"github.com/valyala/fasthttp"
+
+	"github.com/anthony-dong/go-sdk/commons/bufutils"
 )
 
 func NewGzipCodec() Codec {

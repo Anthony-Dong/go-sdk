@@ -5,10 +5,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/apache/thrift/lib/go/thrift"
+
 	"github.com/anthony-dong/go-sdk/commons"
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
 	"github.com/anthony-dong/go-sdk/commons/codec"
-	"github.com/apache/thrift/lib/go/thrift"
 )
 
 func TestTestDecodeMessage(t *testing.T) {
