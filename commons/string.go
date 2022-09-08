@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
 
@@ -202,4 +203,22 @@ func SplitString(str string, sep string) []string {
 		result = append(result, elem)
 	}
 	return result
+}
+
+func TrimLeftSpace(str string) string {
+	if len(str) == 0 {
+		return str
+	}
+	return strings.TrimLeftFunc(str, func(r rune) bool {
+		return unicode.IsSpace(r)
+	})
+}
+
+func TrimRightSpace(str string) string {
+	if len(str) == 0 {
+		return str
+	}
+	return strings.TrimRightFunc(str, func(r rune) bool {
+		return unicode.IsSpace(r)
+	})
 }

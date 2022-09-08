@@ -116,3 +116,8 @@ func TestUnsafeBytes(t *testing.T) {
 func TestSplitString(t *testing.T) {
 	assert.Equal(t, SplitString(`hello,world, a, ,c`, ","), []string{"hello", "world", "a", "c"})
 }
+
+func TestTrimLeftSpace(t *testing.T) {
+	assert.Equal(t, TrimLeftSpace("\t \n hello world \t"), "hello world \t")
+	assert.Equal(t, TrimRightSpace("\t \n hello world \t\n\r "), "\t \n hello world")
+}

@@ -1,6 +1,8 @@
 package commons
 
 import (
+	"bytes"
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -34,4 +36,32 @@ func TestGetCmdName(t *testing.T) {
 
 func TestCheckStdInFromPiped(t *testing.T) {
 	t.Log(CheckStdInFromPiped())
+}
+
+func TestReadLineByFunc(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		result, err := ReadLines(bytes.NewBufferString(`hello
+world
+!`))
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, result, []string{"hello", "world", "!"})
+	})
+	t.Run("error", func(t *testing.T) {
+		result := make([]string, 0)
+		err := ReadLineByFunc(bytes.NewBufferString(`hello
+world
+!`), func(line string) error {
+			if line == "!" {
+				return fmt.Errorf(`invalid string, str: %v`, line)
+			}
+			result = append(result, line)
+			return nil
+		})
+		if err != nil {
+			assert.Error(t, err)
+		}
+		assert.Equal(t, result, []string{"hello", "world"})
+	})
 }
