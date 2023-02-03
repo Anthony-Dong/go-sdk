@@ -18,7 +18,7 @@ export GOFLAGS :=
 
 # PHONY
 .PHONY : all
-all: fmt build ## Let's go!
+all: build ## Let's go!
 
 init: ## init project
 	@if [ ! -e $(shell go env GOPATH)/bin/golangci-lint ]; then curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1; fi
