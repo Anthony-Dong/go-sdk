@@ -29,7 +29,9 @@ ci: check test build ## ci
 .PHONY : build
 build: ## gtool build
 	make -C gtool build
-	rm -rf bin; cp -r gtool/bin bin
+	mkdir -p bin
+	cp -r gtool/bin/gtool bin/gtool
+	$(PROJECT_DIR)/bin/gtool --version
 
 .PHONY : fmt
 fmt: ## fmt
