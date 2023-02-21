@@ -18,7 +18,7 @@ export GOFLAGS :=
 
 # PHONY
 .PHONY : all
-all: fmt build ## Let's go!
+all: build ## Let's go!
 
 init: ## init project
 	@if [ ! -e $(shell go env GOPATH)/bin/golangci-lint ]; then curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1; fi
@@ -29,12 +29,15 @@ ci: check test build ## ci
 .PHONY : build
 build: ## gtool build
 	make -C gtool build
-	rm -rf bin; cp -r gtool/bin bin
+	mkdir -p bin
+	cp -r gtool/bin/gtool bin/gtool
+	$(PROJECT_DIR)/bin/gtool --version
 
 .PHONY : fmt
 fmt: ## fmt
 	golangci-lint run  --fix -v
 	make -C gtool fmt
+	gofmt -w ./
 
 .PHONY : check
 check: ## check custom rule

@@ -24,7 +24,7 @@ func NewCmd() (*cobra.Command, error) {
 	if err := utils.AddCmd(cmd, newPBCodecCmd); err != nil {
 		return nil, err
 	}
-	cmd.AddCommand(newCodecCmd("gizp", codec.NewGzipCodec()))
+	cmd.AddCommand(newCodecCmd("gzip", codec.NewGzipCodec()))
 	cmd.AddCommand(newCodecCmd("base64", codec.NewCodec(codec.NewBase64Codec())))
 	cmd.AddCommand(newCodecCmd("br", codec.NewBrCodec()))
 	cmd.AddCommand(newCodecCmd("deflate", codec.NewDeflateCodec()))
@@ -33,6 +33,29 @@ func NewCmd() (*cobra.Command, error) {
 	cmd.AddCommand(newCodecCmd("url", codec.NewCodec(codec.NewUrlCodec())))
 	cmd.AddCommand(newCodecCmd("hex", codec.NewCodec(codec.NewHexCodec())))
 	cmd.AddCommand(newCodecCmd("hexdump", codec.NewCodec(codec.NewHexDumpCodec())))
+	cmd.AddCommand(newCodecCmd("double-quote", codec.NewCodec(bytesCodec{
+		BytesEncoder: codec.NewStringQuoteCodec(),
+		BytesDecoder: nil,
+	})))
+	cmd.AddCommand(newCodecCmd("single-quote", codec.NewCodec(bytesCodec{
+		BytesEncoder: func() codec.BytesEncoder {
+			r := codec.NewStringQuoteCodec()
+			r.QuoteType = codec.SingleQuoteClike
+			return r
+		}(),
+		BytesDecoder: BytesDecoderFunc(func(src []byte) (dst []byte, err error) {
+			if err := cmd.Help(); err != nil {
+				return nil, err
+			}
+			return nil, fmt.Errorf(`not support decode type`)
+		}),
+	})))
+	cmd.AddCommand(newCodecCmd("pb-desc", codec.NewCodec(bytesCodec{
+		BytesEncoder: BytesEncodeFunc(func(src []byte) (dst []byte) {
+			return src
+		}),
+		BytesDecoder: codec.NewProtoDesc(),
+	})))
 	return cmd, nil
 }
 
@@ -50,18 +73,32 @@ func newCodecCmd(name string, codec codec.Codec) *cobra.Command {
 			if !commons.CheckStdInFromPiped() {
 				return cmd.Help()
 			}
-			if isDecode {
-				if err := codec.Decode(reader, writer); err != nil {
-					return err
+			defer func() {
+				if err == nil {
+					_, _ = writer.Write([]byte{'\n'})
 				}
-				return nil
+			}()
+			if isDecode {
+				return codec.Decode(reader, writer)
 			}
-			if err := codec.Encode(reader, writer); err != nil {
-				return err
-			}
-			return nil
+			return codec.Encode(reader, writer)
 		},
 	}
 	cmd.PersistentFlags().BoolVar(&isDecode, "decode", false, "decode content data")
 	return cmd
+}
+
+type bytesCodec struct {
+	codec.BytesEncoder
+	codec.BytesDecoder
+}
+
+type BytesDecoderFunc func(src []byte) (dst []byte, err error)
+type BytesEncodeFunc func(src []byte) (dst []byte)
+
+func (b BytesDecoderFunc) Decode(src []byte) (dst []byte, err error) {
+	return b(src)
+}
+func (b BytesEncodeFunc) Encode(src []byte) (dst []byte) {
+	return b(src)
 }

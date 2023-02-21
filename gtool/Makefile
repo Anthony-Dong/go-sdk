@@ -1,11 +1,12 @@
 export CGO_ENABLED:=1
 
 .PHONY: all
-all: test build
+all: build
 
 .PHONY: build
 build:
-	bash -x build.sh
+	rm -rf bin
+	CGO_ENABLED=1 go build -v -ldflags "-s -w" -o bin/gtool main.go || exit 1
 
 .PHONY: test
 test:

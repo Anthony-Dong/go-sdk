@@ -22,11 +22,7 @@ jobs:
       - name: Show Project ...
         run: ls -al
       - name: Compile
-        run: cd gtool; go build -v -ldflags "-s -w" -o bin/gtool main.go; cd -; mkdir -p bin ;mv gtool/bin/gtool bin/gtool
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 1
+        run: make build
       - name: Packaging...
         run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz bin/gtool
       - name: Uploading assets...
@@ -56,9 +52,7 @@ jobs:
       - name: Show Project ...
         run: ls -al; go env
       - name: Compile
-        run: cd gtool; go build -v -ldflags "-s -w" -o bin/gtool main.go; cd -; mkdir -p bin ;mv gtool/bin/gtool bin/gtool; bin/gtool -h
-        env:
-          CGO_ENABLED: 1
+        run: make build
       - name: Packaging...
         run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v11.tgz bin/gtool
       - name: Uploading assets...
@@ -88,9 +82,7 @@ jobs:
       - name: Show Project ...
         run: ls -al; go env
       - name: Compile
-        run: cd gtool; go build -v -ldflags "-s -w" -o bin/gtool main.go; cd -; mkdir -p bin ;mv gtool/bin/gtool bin/gtool; bin/gtool -h
-        env:
-          CGO_ENABLED: 1
+        run: make build
       - name: Packaging...
         run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v12.tgz bin/gtool
       - name: Uploading assets...

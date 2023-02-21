@@ -4,18 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/hex"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
 
 	"github.com/anthony-dong/go-sdk/commons"
-
-	"github.com/anthony-dong/go-sdk/commons/consts"
 )
-
-var dumpError = os.Getenv(consts.DebugCodecLog) == "1"
 
 func NewHexDumpCodec() BytesCodec {
 	return &hexDumpCodec{}

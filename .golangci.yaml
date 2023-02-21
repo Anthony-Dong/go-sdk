@@ -1,6 +1,12 @@
 run:
   # include `vendor` `third_party` `testdata` `examples` `Godeps` `builtin`
   skip-dirs-use-default: true
+  skip-dirs:
+    - example
+    - commons/codec/thrift_codec/kitex
+    - commons/internal
+    - commons/metric
+    - internal/cmd
 
 # output configuration options
 output:
