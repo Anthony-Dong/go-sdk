@@ -2,9 +2,9 @@ package gen
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/anthony-dong/go-sdk/commons"
+	"github.com/anthony-dong/go-sdk/gtool/gen/protoc"
 
 	"github.com/spf13/cobra"
 
@@ -22,13 +22,14 @@ func NewCmd() (*cobra.Command, error) {
 
 func newPBCmd() (*cobra.Command, error) {
 	var (
-		dir     string
-		gopkg   string
-		include []string
-		output  string
+		main          string
+		include       []string
+		plugin        []string
+		protocGenGo   protoc.ProtocGenGo
+		protocGenDesc protoc.ProtocGenDesc
 	)
 	cmd := cobra.Command{
-		Use:   "protoc [-D dir] [-I include] [--go_pkg package]",
+		Use:   "protoc [-I include] [--go_pkg package] [--idl idl]",
 		Short: `Auto compile protobuf IDL`,
 		Long: `Plugin make it easy to compile PB:
 Help Doc:
@@ -45,23 +46,19 @@ Install:
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			gen := NewProtocGen(dir, gopkg, func(gen *ProtocGen) {
-				if len(include) > 0 {
-					gen.Include = include
+			gen := protoc.NewProtocGen(main, func(gen *protoc.ProtocGen) {
+				gen.Include = include
+				if commons.ContainsString(plugin, "go") {
+					gen.Go = &protocGenGo
 				}
-				if output != "" {
-					gen.OutPutPath = output
+				if commons.ContainsString(plugin, "desc") {
+					gen.Desc = &protocGenDesc
 				}
 			})
-			result, err := gen.Gen(ctx)
-			if err != nil {
-				if result == nil {
-					return err
-				}
-				logs.CtxErrorf(ctx, "[Protoc] exec error\n===STD OUT===\n%s\n===ERR OUT====\n%s", result.StdOut.String(), result.StdError.String())
+			if err := gen.Gen(ctx); err != nil {
 				return err
 			}
-			logs.CtxInfof(ctx, "[Protoc] exec success\n%s", result.Command)
+			logs.CtxInfof(ctx, "exec success")
 			return nil
 		},
 	}
@@ -69,11 +66,17 @@ Install:
 	if err != nil {
 		return nil, err
 	}
-	cmd.Flags().StringVarP(&dir, "dir", "D", pwd, "The project dir")
-	cmd.Flags().StringVarP(&gopkg, "go_pkg", "", "", "Define go import path, eg: anthony-dong/proto-example/pb-gen")
-	cmd.Flags().StringVarP(&output, "output", "O", filepath.Join(commons.GetGoPath(), "src"), "The output dir")
-	cmd.Flags().StringArrayVarP(&include, "include", "I", []string{}, "Add an IDL search path for includes")
-	if err := cmd.MarkFlagRequired("go_pkg"); err != nil {
+	cmd.Flags().StringVar(&main, "idl", pwd, "The main idl")
+	cmd.Flags().StringArrayVarP(&include, "include", "I", []string{}, "Add an IDL search path for includes, ignore project dir")
+	cmd.Flags().StringArrayVar(&plugin, "plugin", []string{"go"}, "The protoc plugin")
+	cmd.Flags().StringVar(&protocGenGo.OutPutPath, "go_output", "@tmp", "The output dir. @tmp: sys tmp dir")
+	cmd.Flags().StringVarP(&protocGenGo.Package, "go_pkg", "", "", "Define output go package, eg: anthony-dong/proto-example/pb-gen")
+	cmd.Flags().BoolVarP(&protocGenGo.SourceRelative, "go_source_relative", "", false, "The output filename is derived from the input filename.")
+	cmd.Flags().StringVarP(&protocGenGo.Command, "go_protoc-gen-go", "", "", "The local protoc-gen-go cli")
+	cmd.Flags().StringVarP(&protocGenGo.GrpcCommand, "go_protoc-gen-go-grpc", "", "", "The local protoc-gen-go-grpc cli")
+
+	cmd.Flags().StringVar(&protocGenDesc.Output, "desc_output", "@tmp", "The output dir. @tmp: sys tmp dir")
+	if err := cmd.MarkFlagRequired("idl"); err != nil {
 		return nil, err
 	}
 	return &cmd, nil

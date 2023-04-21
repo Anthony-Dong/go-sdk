@@ -79,6 +79,14 @@ func Test_BytesCodec(t *testing.T) {
 		testCodec(t, NewDeflateCodec(), in)
 	})
 
+	t.Run("string_quote", func(t *testing.T) {
+		var (
+			in = []byte("hello world")
+		)
+		testBytesCodec(t, NewStringQuote(), in)
+		testCodec(t, NewCodec(NewStringQuote()), in)
+	})
+
 	t.Run("hexdump", func(t *testing.T) {
 		var (
 			in = []byte("hello world!!! 你好，世界！！！")

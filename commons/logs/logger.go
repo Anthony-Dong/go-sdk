@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync/atomic"
 )
 
 type Level uint8
@@ -46,26 +45,29 @@ func (l Level) String() string {
 
 type logger struct {
 	level  Level
-	log    atomic.Value
+	log    func(calldepth int, s string) error
 	caller int
+
+	withPrefix bool
 }
 
-func (s *logger) getLogger() *log.Logger {
-	result, _ := s.log.Load().(*log.Logger)
-	return result
+func NewDefaultLogger(withPrefix bool, level Level, log func(calldepth int, s string) error) Logger {
+	r := &logger{withPrefix: withPrefix, level: level}
+	r.log = log
+	return r
+}
+
+func GetDefaultLogger() Logger {
+	return defaultLogger
 }
 
 var (
 	defaultLogger = &logger{
 		level:  LevelDebug,
-		log:    atomic.Value{},
+		log:    log.New(os.Stdout, "", log.Lshortfile|log.Ldate|log.Lmicroseconds).Output,
 		caller: 4,
 	}
 )
-
-func init() {
-	defaultLogger.log.Store(log.New(os.Stdout, "", log.Lshortfile|log.Ldate|log.Lmicroseconds))
-}
 
 func SetLevel(l Level) {
 	defaultLogger.level = l
@@ -80,11 +82,9 @@ func SetLevelString(s string) {
 func GetLevel() Level {
 	return defaultLogger.level
 }
+
 func IsLevel(level Level) bool {
 	return defaultLogger.level >= level
-}
-func SetLogger(l *log.Logger) {
-	defaultLogger.log.Store(l)
 }
 
 func Debugf(format string, v ...interface{}) {
@@ -153,21 +153,23 @@ func (s *logger) output(level Level, str string) {
 		return
 	}
 	formatStr := ""
-	switch level {
-	case LevelFatal:
-		formatStr = "\033[35m[FATAL]\033[0m " + str
-	case LevelError:
-		formatStr = "\033[31m[ERROR]\033[0m " + str
-	case LevelWarning:
-		formatStr = "\033[33m[WARN]\033[0m " + str
-	case LevelInfo:
-		formatStr = "\033[32m[INFO]\033[0m " + str
-	case LevelDebug:
-		formatStr = "\033[36m[DEBUG]\033[0m " + str
+	if s.withPrefix {
+		switch level {
+		case LevelFatal:
+			formatStr = "\033[35m[FATAL]\033[0m " + str
+		case LevelError:
+			formatStr = "\033[31m[ERROR]\033[0m " + str
+		case LevelWarning:
+			formatStr = "\033[33m[WARN]\033[0m " + str
+		case LevelInfo:
+			formatStr = "\033[32m[INFO]\033[0m " + str
+		case LevelDebug:
+			formatStr = "\033[36m[DEBUG]\033[0m " + str
+		}
+	} else {
+		formatStr = str
 	}
-	if l := s.getLogger(); l != nil {
-		_ = l.Output(s.caller, formatStr)
-	}
+	_ = s.log(s.caller, formatStr)
 }
 
 // log id

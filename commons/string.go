@@ -223,3 +223,35 @@ func TrimRightSpace(str string) string {
 		return unicode.IsSpace(r)
 	})
 }
+
+func MergeStringSlice(m1 []string, m2 []string) []string {
+	if len(m2) == 0 {
+		return m1
+	}
+	if len(m1) == 0 {
+		return m2
+	}
+	trim := make(map[string]bool, len(m1)+len(m2))
+	for _, elem := range m1 {
+		trim[elem] = true
+	}
+	for _, elem := range m2 {
+		trim[elem] = true
+	}
+	result := make([]string, 0, len(trim))
+	for k := range trim {
+		result = append(result, k)
+	}
+	return result
+}
+
+func Map2StringList(from map[string]bool) []string {
+	if len(from) == 0 {
+		return []string{}
+	}
+	result := make([]string, 0)
+	for key := range from {
+		result = append(result, key)
+	}
+	return result
+}

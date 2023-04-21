@@ -3,6 +3,7 @@ package codec
 import (
 	"errors"
 	"io"
+	"strconv"
 
 	"github.com/anthony-dong/go-sdk/commons/bufutils"
 )
@@ -110,4 +111,23 @@ func String2Slice(str string) []byte {
 }
 func Slice2String(slice []byte) string {
 	return string(slice)
+}
+
+func NewStringQuote() BytesCodec {
+	return _string{}
+}
+
+type _string struct {
+}
+
+func (_string) Encode(src []byte) (dst []byte) {
+	return []byte(strconv.Quote(bufutils.UnsafeString(src)))
+}
+
+func (_string) Decode(src []byte) (dst []byte, err error) {
+	unquote, err := strconv.Unquote(bufutils.UnsafeString(src))
+	if err != nil {
+		return nil, err
+	}
+	return []byte(unquote), nil
 }

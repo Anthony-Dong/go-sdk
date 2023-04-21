@@ -28,7 +28,7 @@ func NewDecodeOptions() gopacket.DecodeOptions {
 	return options
 }
 
-func NewFileSource(file string, cfg gopacket.DecodeOptions) (PacketSource, error) {
+func NewFileSource(file string, cfg gopacket.DecodeOptions, isLoopback bool) (PacketSource, error) {
 	if file == "" {
 		return nil, errors.New(`required file`)
 	}
@@ -40,7 +40,11 @@ func NewFileSource(file string, cfg gopacket.DecodeOptions) (PacketSource, error
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("open %s file err", filename))
 	}
-	source := gopacket.NewPacketSource(src, layers.LayerTypeEthernet)
+	layerType := layers.LayerTypeEthernet
+	if isLoopback {
+		layerType = layers.LayerTypeLoopback
+	}
+	source := gopacket.NewPacketSource(src, layerType)
 	source.DecodeOptions = cfg
 	return source, nil
 }
@@ -59,6 +63,16 @@ func NewConsulSource(r io.Reader, cfg gopacket.DecodeOptions) PacketSource {
 		r:             r,
 		DecodeOptions: cfg,
 	}
+}
+
+func IsConsulSource(source PacketSource) bool {
+	_, isOK := source.(*ConsulSource)
+	return isOK
+}
+
+func IsFileSource(source PacketSource) bool {
+	_, isOK := source.(*gopacket.PacketSource)
+	return isOK
 }
 
 func (t *ConsulSource) Read() {

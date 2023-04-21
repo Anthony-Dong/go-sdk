@@ -1,9 +1,12 @@
 package tcpdump
 
 import (
-	"context"
 	"os"
 	"testing"
+
+	"github.com/google/gopacket/layers"
+
+	"github.com/anthony-dong/go-sdk/gtool/tcpdump/reassembly"
 
 	"github.com/stretchr/testify/assert"
 
@@ -11,11 +14,10 @@ import (
 )
 
 func TestNewConsulSource(t *testing.T) {
-	cfg := tcpdump.NewDefaultConfig()
-	cfg.Dump = true
-	ctx := tcpdump.NewCtx(context.Background(), cfg)
-	ctx.AddDecoder("http", tcpdump.NewHTTP1Decoder())
-	ctx.AddDecoder("thrift", tcpdump.NewThriftDecoder())
+	assembler := reassembly.NewAssembler(tcpdump.NewDefaultDecoder(false, nil, map[string]tcpdump.Decoder{
+		"HTTP":   tcpdump.NewHTTP1Decoder(),
+		"Thrift": tcpdump.NewThriftDecoder(),
+	}))
 	testFile := func(file string, want int) {
 		open, err := os.Open(readFile(file))
 		if err != nil {
@@ -24,10 +26,10 @@ func TestNewConsulSource(t *testing.T) {
 		defer open.Close()
 		source := NewConsulSource(open, NewDecodeOptions())
 		num := 0
-		for elem := range source.Packets() {
-			packet := debugPacket(elem, ctx)
-			ctx.HandlerPacket(packet)
-			elem.(WaitPacket).Notify()
+		for packet := range source.Packets() {
+			tcp := packet.TransportLayer().(*layers.TCP)
+			assembler.AssembleWithContext(packet.NetworkLayer().NetworkFlow(), tcp, &reassembly.Context{CaptureInfo: packet.Metadata().CaptureInfo})
+			packet.(WaitPacket).Notify()
 			num++
 		}
 		assert.Equal(t, num, want)

@@ -6,6 +6,7 @@ require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/apache/thrift v0.13.0
 	github.com/bytedance/gopkg v0.0.0-20220413063733-65bf48ffb3a7
+	github.com/creack/pty v1.1.18
 	github.com/fatih/color v1.13.0
 	github.com/golang/protobuf v1.5.0
 	github.com/golang/snappy v0.0.4
@@ -15,6 +16,10 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.1
 	github.com/valyala/fasthttp v1.35.0
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
+
+// replace golang.org/x/sys@release-branch.go1.13
+replace golang.org/x/sys => golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a

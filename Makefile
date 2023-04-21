@@ -33,6 +33,9 @@ build: ## gtool build
 	cp -r gtool/bin/gtool bin/gtool
 	$(PROJECT_DIR)/bin/gtool --version
 
+install:
+	cd gtool; CGO_ENABLED=1 go build  -ldflags "-s -w" -o $$(go env GOPATH)/bin/gtool -v main.go
+
 .PHONY : fmt
 fmt: ## fmt
 	golangci-lint run  --fix -v

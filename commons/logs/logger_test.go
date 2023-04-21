@@ -45,4 +45,11 @@ func TestName(t *testing.T) {
 	CtxDebugf(SetLogId(context.Background(), "1111"), "data: %s", "1")
 	CtxDebugf(context.WithValue(context.Background(), struct {
 	}{}, "xxxxx"), "data: %s", "1")
+
+	assert.Equal(t, IsLevel(LevelDebug), true)
+	assert.Equal(t, IsLevel(LevelError), true)
+
+	SetLevel(LevelFatal)
+	assert.Equal(t, IsLevel(LevelFatal), true)
+	assert.Equal(t, IsLevel(LevelError), false)
 }

@@ -40,3 +40,12 @@ func TestCopyBytes(t *testing.T) {
 	bf := NewBufferData([]byte(`hello world`))
 	assert.Equal(t, CopyBufferBytes(bf), []byte(`hello world`))
 }
+
+func TestName(t *testing.T) {
+	var data = ""
+	unsafeBytes := UnsafeBytes(data)
+	t.Logf("%x \n", unsafe.Pointer(&unsafeBytes))
+	t.Logf("%x \n", unsafe.Pointer(&data))
+	t.Log(string(unsafeBytes))
+	t.Log(string(unsafeBytes))
+}

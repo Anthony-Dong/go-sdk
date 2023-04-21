@@ -121,3 +121,9 @@ func TestTrimLeftSpace(t *testing.T) {
 	assert.Equal(t, TrimLeftSpace("\t \n hello world \t"), "hello world \t")
 	assert.Equal(t, TrimRightSpace("\t \n hello world \t\n\r "), "\t \n hello world")
 }
+
+func TestMergeStringSlice(t *testing.T) {
+	assert.Equal(t, MergeStringSlice([]string{"1", "2"}, []string{"2", "3"}), []string{"1", "2", "3"})
+	assert.Equal(t, MergeStringSlice([]string{"1", "2"}, []string{"2"}), []string{"1", "2"})
+	assert.Equal(t, MergeStringSlice([]string{"1", "2"}, []string{}), []string{"1", "2"})
+}

@@ -2,167 +2,113 @@ package tcpdump
 
 import (
 	"context"
-	"fmt"
-	"net"
 	"os"
-	"strings"
 
-	"github.com/anthony-dong/go-sdk/commons/tcpdump"
-
-	"github.com/google/gopacket"
+	"github.com/fatih/color"
 	"github.com/google/gopacket/layers"
 	"github.com/spf13/cobra"
 
 	"github.com/anthony-dong/go-sdk/commons"
-)
-
-type MsgType string
-
-const (
-	Thrift MsgType = "thrift"
-	HTTP   MsgType = "http"
+	"github.com/anthony-dong/go-sdk/commons/codec"
+	"github.com/anthony-dong/go-sdk/commons/tcpdump"
+	"github.com/anthony-dong/go-sdk/gtool/tcpdump/reassembly"
+	"github.com/anthony-dong/go-sdk/gtool/tcpdump/utils"
 )
 
 func NewCmd() (*cobra.Command, error) {
 	var (
-		cfg      = tcpdump.NewDefaultConfig()
+		cfg      = NewDefaultConfig()
 		filename string
 	)
 	cmd := &cobra.Command{
 		Use:   `tcpdump [-r file] [-v] [-X] [--max dump size]`,
 		Short: `decode tcpdump file`,
 		Long:  `decode tcpdump file, help doc: https://github.com/Anthony-Dong/go-sdk/tree/master/gtool/tcpdump`,
-		Example: `	1. step1: tcpdump 'port 8080' -w ~/data/tcpdump.pcap
-	   step2: gtool tcpdump -r ~/data/tcpdump.pcap
-	2. tcpdump 'port 8080' -X -l -n | gtool tcpdump
-`,
+		Example: `  sudo tcpdump -i eth0  -n  -l -X | gtool tcpdump
+
+Help Doc:
+  - https://www.tcpdump.org/manpages/pcap-filter.7.html
+  - https://www.tcpdump.org/manpages/tcpdump.1.html`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), filename, cfg)
 		},
 	}
+	cmd.Flags().BoolVar(&cfg.Verbose, "verbose", false, "Enable Verbose.")
+	cmd.Flags().BoolVar(&cfg.DisableReassembly, "disable_reassembly", false, "Disable tcp Reassembly.")
+	cmd.Flags().BoolVar(&cfg.Loopback, "loopback", false, "The NIC type for packet capture is loopback.")
 	cmd.Flags().StringVarP(&filename, "file", "r", "", "The packets file, eg: tcpdump_xxx_file.pcap.")
-	cmd.Flags().BoolVarP(&cfg.Verbose, "verbose", "v", false, "Enable Display decoded details.")
-	cmd.Flags().BoolVarP(&cfg.Dump, "dump", "X", false, "Enable Display payload details with hexdump.")
-	cmd.Flags().IntVarP(&cfg.DumpMaxSize, "max", "", 0, "The hexdump max size")
+	cmd.Flags().StringArrayVar(&cfg.Filter, "filter", cfg.Filter, "The custom filter(UDP,ALL,OnlyTCP).")
 	return cmd, nil
 }
 
-func run(ctx context.Context, filename string, cfg tcpdump.ContextConfig) error {
-	decoder := tcpdump.NewCtx(ctx, cfg)
+func run(ctx context.Context, filename string, cfg Config) error {
+	if cfg.Verbose {
+		cfg.Show[tcpdump.LogDecodeError] = true
+	}
+	logs := cfg.Logger
+	logs.Log(tcpdump.LogDefault, "%s start. file: %s, cfg: %s", color.GreenString("[Tcpdump]"), filename, commons.ToJsonString(cfg))
 	options := NewDecodeOptions()
-	decoder.AddDecoder("HTTP1.X", tcpdump.NewHTTP1Decoder())
-	decoder.AddDecoder("Thrift", tcpdump.NewThriftDecoder())
 	var source PacketSource
+	var err error
 	if commons.CheckStdInFromPiped() {
 		source = NewConsulSource(os.Stdin, options)
-		decoder.Config.PrintHeader = false
+		cfg.Show[tcpdump.LogTCPReassembly] = false
+		cfg.Show[tcpdump.LogDecodeError] = true
 	} else {
-		var err error
-		source, err = NewFileSource(filename, options)
-		if err != nil {
+		if source, err = NewFileSource(filename, options, cfg.Loopback); err != nil {
 			return err
 		}
-		decoder.Config.PrintHeader = true
+		cfg.Show[tcpdump.LogTCPReassembly] = true
 	}
-	for data := range source.Packets() {
-		packet := debugPacket(data, decoder)
-		decoder.HandlerPacket(packet)
-		if wait, isOk := data.(WaitPacket); isOk {
-			wait.Notify()
+	newDecoder := tcpdump.NewDefaultDecoder(true, cfg.Logger, map[string]tcpdump.Decoder{
+		"HTTP":   tcpdump.NewHTTP1Decoder(),
+		"Thrift": tcpdump.NewThriftDecoder(),
+	})
+	assembler := reassembly.NewAssembler(newDecoder, func(option *reassembly.TCPStreamOption) {
+		*option = cfg.TCPStreamOption
+	})
+	for packet := range source.Packets() {
+		if packet == nil {
+			continue
 		}
+		done := func() {
+			if wait, isOk := packet.(WaitPacket); isOk {
+				wait.Notify()
+			}
+		}
+		success := false
+
+		// tcp
+		if tcp, isOK := packet.TransportLayer().(*layers.TCP); isOK {
+			if cfg.DisableReassembly {
+				header := utils.TCPDumpHeader(tcp, packet.Metadata().Timestamp, nil, utils.NewTCPMetaInfo(packet.NetworkLayer().NetworkFlow(), packet.TransportLayer().TransportFlow(), false), nil)
+				logs.Log(tcpdump.LogDefault, header)
+				newDecoder().Decode(nil, tcp.LayerPayload())
+			} else {
+				assembler.AssembleWithContext(packet.NetworkLayer().NetworkFlow(), tcp, &reassembly.Context{CaptureInfo: packet.Metadata().CaptureInfo})
+			}
+			success = true
+		}
+
+		// udp
+		if udp, isOk := packet.TransportLayer().(*layers.UDP); isOk && cfg.EnableUDP() {
+			if len(udp.LayerPayload()) > 0 {
+				hex := codec.NewHexDumpCodec().Encode(udp.LayerPayload())
+				logs.Log(tcpdump.LogDefault, string(hex))
+			}
+			success = true
+		}
+		if !success && IsFileSource(source) && cfg.EnableALL() {
+			dump := packet.Dump()
+			logs.Log(tcpdump.LogDefault, dump)
+		}
+		if !success && IsConsulSource(source) && cfg.EnableALL() {
+			payload := packet.TransportLayer().LayerPayload()
+			if len(payload) > 0 {
+				logs.Log(tcpdump.LogDefault, string(codec.NewHexDumpCodec().Encode(payload)))
+			}
+		}
+		done()
 	}
 	return nil
-}
-
-var packetCounter = 1
-
-func debugPacket(packet gopacket.Packet, decoder *tcpdump.Context) tcpdump.Packet {
-	var (
-		src, dest         net.IP
-		L3IsOk, L4IsOK    bool
-		srcPort, destPort int
-		tcpFlags          []string
-		data              = tcpdump.Packet{}
-	)
-	switch L3 := packet.NetworkLayer().(type) {
-	case *layers.IPv4:
-		L3IsOk = true
-		src = L3.SrcIP
-		dest = L3.DstIP
-	case *layers.IPv6:
-		L3IsOk = true
-		src = L3.SrcIP
-		dest = L3.DstIP
-	}
-	switch L4 := packet.TransportLayer().(type) {
-	case *layers.TCP:
-		L4IsOK = true
-		srcPort = int(L4.SrcPort)
-		destPort = int(L4.DstPort)
-		tcpFlags = loadTcpFlag(L4)
-	}
-	if L3IsOk && L4IsOK {
-		data.Src = tcpdump.IpPort(src.String(), srcPort)
-		data.Dst = tcpdump.IpPort(dest.String(), destPort)
-		data.TCPFlag = tcpFlags
-		tcp := packet.TransportLayer().(*layers.TCP)
-		result := HandlerTcp(data.Src, data.Dst, tcp)
-		if !result.Is(OutOfOrderStatus) {
-			data.Data = tcp.Payload
-		}
-		data.ACK = int(tcp.Ack)
-		payloadSize := len(tcp.Payload)
-		builder := strings.Builder{}
-		builder.WriteString(fmt.Sprintf("[%d] ", packetCounter))
-		builder.WriteString(fmt.Sprintf("[%s] ", packet.Metadata().Timestamp.Format(commons.FormatTimeV1)))
-		// packet.LinkLayer().LayerType(),
-		builder.WriteString(fmt.Sprintf("[%s-%s] ", packet.NetworkLayer().LayerType(), packet.TransportLayer().LayerType()))
-		builder.WriteString(fmt.Sprintf("[%s -> %s] ", data.Src, data.Dst))
-		builder.WriteString(fmt.Sprintf("[%s] ", strings.Join(tcpFlags, ",")))
-		builder.WriteString(fmt.Sprintf("%s ", GetRelativeInfo(data.Src, data.Dst, tcp)))
-		if payloadSize != 0 {
-			builder.WriteString(fmt.Sprintf("[%d Byte] ", payloadSize))
-		}
-		builder.WriteString(fmt.Sprintf("%v", result))
-		decoder.PrintHeader(builder.String())
-		packetCounter = packetCounter + 1
-		return data
-	}
-
-	if packet.TransportLayer() != nil {
-		decoder.Dump(packet.TransportLayer().LayerPayload())
-	}
-	return data
-}
-
-func loadTcpFlag(L4 *layers.TCP) []string {
-	var flags []string
-	if L4.FIN {
-		flags = append(flags, "FIN")
-	}
-	if L4.SYN {
-		flags = append(flags, "SYN")
-	}
-	if L4.ACK {
-		flags = append(flags, "ACK")
-	}
-	if L4.PSH {
-		flags = append(flags, "PSH")
-	}
-	if L4.RST {
-		flags = append(flags, "RST")
-	}
-	if L4.URG {
-		flags = append(flags, "URG")
-	}
-	if L4.ECE {
-		flags = append(flags, "ECE")
-	}
-	if L4.CWR {
-		flags = append(flags, "CWR")
-	}
-	if L4.NS {
-		flags = append(flags, "NS")
-	}
-	return flags
 }

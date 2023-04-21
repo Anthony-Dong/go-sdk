@@ -24,6 +24,9 @@ func NewCmd() (*cobra.Command, error) {
 	if err := utils.AddCmd(cmd, newPBCodecCmd); err != nil {
 		return nil, err
 	}
+	if err := utils.AddCmd(cmd, newPBDescCodecCmd); err != nil {
+		return nil, err
+	}
 	cmd.AddCommand(newCodecCmd("gzip", codec.NewGzipCodec()))
 	cmd.AddCommand(newCodecCmd("base64", codec.NewCodec(codec.NewBase64Codec())))
 	cmd.AddCommand(newCodecCmd("br", codec.NewBrCodec()))
@@ -33,6 +36,7 @@ func NewCmd() (*cobra.Command, error) {
 	cmd.AddCommand(newCodecCmd("url", codec.NewCodec(codec.NewUrlCodec())))
 	cmd.AddCommand(newCodecCmd("hex", codec.NewCodec(codec.NewHexCodec())))
 	cmd.AddCommand(newCodecCmd("hexdump", codec.NewCodec(codec.NewHexDumpCodec())))
+	cmd.AddCommand(newCodecCmd("string", codec.NewCodec(codec.NewStringQuote())))
 	cmd.AddCommand(newCodecCmd("double-quote", codec.NewCodec(bytesCodec{
 		BytesEncoder: codec.NewStringQuoteCodec(),
 		BytesDecoder: nil,
@@ -50,19 +54,14 @@ func NewCmd() (*cobra.Command, error) {
 			return nil, fmt.Errorf(`not support decode type`)
 		}),
 	})))
-	cmd.AddCommand(newCodecCmd("pb-desc", codec.NewCodec(bytesCodec{
-		BytesEncoder: BytesEncodeFunc(func(src []byte) (dst []byte) {
-			return src
-		}),
-		BytesDecoder: codec.NewProtoDesc(),
-	})))
 	return cmd, nil
 }
 
 var (
-	reader   io.Reader = os.Stdin
-	writer   io.Writer = os.Stdout
-	isDecode bool
+	reader     io.Reader = os.Stdin
+	writer     io.Writer = os.Stdout
+	isDecode   bool
+	appendLine bool
 )
 
 func newCodecCmd(name string, codec codec.Codec) *cobra.Command {
@@ -81,10 +80,16 @@ func newCodecCmd(name string, codec codec.Codec) *cobra.Command {
 			if isDecode {
 				return codec.Decode(reader, writer)
 			}
+			if appendLine {
+				if _, err := writer.Write([]byte{'\n'}); err != nil {
+					return err
+				}
+			}
 			return codec.Encode(reader, writer)
 		},
 	}
 	cmd.PersistentFlags().BoolVar(&isDecode, "decode", false, "decode content data")
+	cmd.PersistentFlags().BoolVar(&appendLine, "line", false, "append line")
 	return cmd
 }
 
