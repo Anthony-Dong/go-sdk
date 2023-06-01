@@ -1,0 +1,4 @@
+Hexo:
+  Ignore:
+    - "/post"
+    - "not_hexo.md"

@@ -1,0 +1,98 @@
+name: release-workflow
+on:
+  release:
+    types:
+      - created
+jobs:
+  package_linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goarch: amd64
+            goos: linux
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.13.15'
+      - name: Apt Install ...
+        run: sudo apt-get update; sudo apt-get install libpcap-dev # install libpcap for gopcap-sdk
+      - name: Show Project ...
+        run: ls -al
+      - name: Compile
+        run: make build
+      - name: Packaging...
+        run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz bin/gtool
+      - name: Uploading assets...
+        if: ${{ !env.ACT }}
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./gtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz
+          asset_name: gtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz
+          asset_content_type: application/gzip
+  package_darwin_11:
+    runs-on: macos-11
+    strategy:
+      matrix:
+        include:
+          - goarch: amd64
+            goos: darwin
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.13.15'
+      - name: Show Project ...
+        run: ls -al; go env
+      - name: Compile
+        run: make build
+      - name: Packaging...
+        run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v11.tgz bin/gtool
+      - name: Uploading assets...
+        if: ${{ !env.ACT }}
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v11.tgz
+          asset_name: gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v11.tgz
+          asset_content_type: application/gzip
+  package_darwin_12:
+    runs-on: macos-12
+    strategy:
+      matrix:
+        include:
+          - goarch: amd64
+            goos: darwin
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.13.15'
+      - name: Show Project ...
+        run: ls -al; go env
+      - name: Compile
+        run: make build
+      - name: Packaging...
+        run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v12.tgz bin/gtool
+      - name: Uploading assets...
+        if: ${{ !env.ACT }}
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v12.tgz
+          asset_name: gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v12.tgz
+          asset_content_type: application/gzip
