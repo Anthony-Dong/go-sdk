@@ -1,57 +1,40 @@
-# #######################################################
-# Function :Makefile for go                             #
-# Platform :All Linux Based Platform                    #
-# Version  :1.0                                         #
-# Date     :2020-12-17                                  #
-# Author   :fanhaodong516@gmail.com                     #
-# Usage    :make help									#
-# #######################################################
-
-# dir
-PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-
 # go env
 export GO111MODULE := on
-export GOPROXY := https://goproxy.cn,direct
 export GOPRIVATE :=
 export GOFLAGS :=
+export CGO_ENABLED := 1
 
-# PHONY
-.PHONY : all
-all: build ## Let's go!
+.PHONY: ci
+ci: check fmt build
 
+.PHONY: init
 init: ## init project
 	@if [ ! -e $(shell go env GOPATH)/bin/golangci-lint ]; then curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1; fi
 
-.PHONY: ci
-ci: check test build ## ci
+.PHONY: build
+build:
+	rm -rf bin
+	go build -v -ldflags "-s -w" -o bin/gtool gtool/main.go
+	bin/gtool --version
 
-.PHONY : build
-build: ## gtool build
-	make -C gtool build
-	mkdir -p bin
-	cp -r gtool/bin/gtool bin/gtool
-	$(PROJECT_DIR)/bin/gtool --version
+.PHONY: install
+install:
+	go build -v -ldflags "-s -w" -o $$(go env GOPATH)/bin/gtool  gtool/main.go
+	$$(go env GOPATH)/bin/gtool --version
 
-.PHONY : fmt
-fmt: ## fmt
+.PHONY: fmt
+fmt:
 	golangci-lint run  --fix -v
-	make -C gtool fmt
-	gofmt -w ./
 
-.PHONY : check
-check: ## check custom rule
+.PHONY: check
+check:
 	go run internal/cmd/clear.go
 
-.PHONY : test
-test: ## go test
+.PHONY: test
+test: ## go tool cover -html=cover.out
+	make -C gtool/tcpdump/test un_compress
 	go test -coverprofile cover.out -count=1 ./...
-	make -C gtool test
 
-.PHONY : release
-release: ## release new version
-	@for elem in `find . -name '*.md'`; do sed -i 's/1.0.4/1.0.5/g' $$elem ; done
-
-.PHONY : help
+.PHONY: help
 help: ## help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf " \033[36m%-20s\033[0m  %s\n", $$1, $$2}' $(MAKEFILE_LIST)

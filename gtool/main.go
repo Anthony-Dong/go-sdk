@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"github.com/anthony-dong/go-sdk/gtool/tcpdump"
 
@@ -20,7 +21,7 @@ import (
 )
 
 const (
-	version = "v1.0.5"
+	version = "v1.3.0"
 )
 
 func main() {
@@ -39,7 +40,7 @@ func newRootCmd() (*cobra.Command, error) {
 		logLevel   = ""
 	)
 	var rootCmd = &cobra.Command{
-		Use:               utils.CliName,
+		Use:               os.Args[0],
 		Version:           version,
 		CompletionOptions: cobra.CompletionOptions{DisableDefaultCmd: true},
 		SilenceErrors:     true, // 屏蔽掉执行错误默认打印日志

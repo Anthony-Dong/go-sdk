@@ -12,7 +12,7 @@ import (
 
 func readFile(file string) string {
 	dir := commons.GetGoProjectDir()
-	return filepath.Join(dir, "tcpdump/test", file)
+	return filepath.Join(dir, "/gtool/tcpdump/test", file)
 }
 
 func Test_DecodeTCPDump(t *testing.T) {

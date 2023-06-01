@@ -16,8 +16,8 @@ jobs:
         run: sudo apt-get update; sudo apt-get install libpcap-dev
       - name: Show Project ...
         run: ls -al
-      - name: CI
-        run: make ci
+      - name: Go Test ...
+        run: make test
   golangci_sdk:
     name: lint go-sdk
     runs-on: ubuntu-latest

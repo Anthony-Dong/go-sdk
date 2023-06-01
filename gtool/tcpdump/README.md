@@ -9,7 +9,7 @@
 1. 解析[Thrift协议](https://github.com/Anthony-Dong/go-sdk/tree/master/commons/codec/thrift_codec)是我自己写的, HTTP使用的[FastHTTP](https://github.com/valyala/fasthttp), L2-L7协议解析是用的[Go-Packet](https://github.com/google/gopacket) ！
 2. Go-[Packet](https://www.tcpdump.org/manpages/pcap.3pcap.html) 需要开启`CGO_ENABLED=1`, 由于交叉编译对于CGO支持并不友好, 所以这里如果你想用, 目前仅仅支持[release](https://github.com/Anthony-Dong/go-sdk/releases)中下载 linux & macos 版本, 其他环境可以参考 [如何下载gtool-cli](../)! 
 3. 注意Linux环境需要安装 `libpcap`, 例如我是Debian, 可以执行 `sudo apt-get install libpcap-dev`, 具体可以参考:[pcap.h header file problem](https://stackoverflow.com/questions/5779784/pcap-h-header-file-problem) ! mac 用户不需要！
-4. 解析失败会默认 Hexdump Application Payload！
+4. 解析失败会默认 hexdump 数据包
 
 ## Feature
 
@@ -25,11 +25,7 @@ Name: decode tcpdump file, help doc: https://github.com/Anthony-Dong/go-sdk/tree
 
 Usage: gtool tcpdump [-r file] [-v] [-X] [--max dump size] [flags]
 
-Examples:
-	1. step1: tcpdump 'port 8080' -w ~/data/tcpdump.pcap
-	   step2: gtool tcpdump -r ~/data/tcpdump.pcap
-	2. tcpdump 'port 8080' -X -l -n | gtool tcpdump
-
+Examples: tcpdump 'port 8080' -X -l -n | gtool tcpdump
 
 Options:
   -X, --dump          Enable Display payload details with hexdump.
@@ -46,9 +42,12 @@ To get more help with gtool, check out our guides at https://github.com/Anthony-
 ```
 
 ## FAQ
+
+注意：本人自己写的 tcp 包重组的逻辑，试着用 pcap-reassembly去写，但是发现很多边界问题解决不了，后期如果没啥问题，会直接替换长 pcap的逻辑.
+
 Q: 由于我们应用层协议已经屏蔽了tcp协议的细节，比如TCP重传，TCP Windows Update，TCP Dup ACK！
 
-A: 这里使用一个tricky的逻辑 (建立的前提需要维护一个 tcp 流的状态, 具体可以见: [RFC793](https://www.rfc-editor.org/rfc/rfc793#section-3.2))
+A: 这里使用一个tricky的逻辑 (建立的前提需要维护一个 tcp 流的状态, 具体可以见: [RFC793](https://www.rfc-editor.org/rfc/rfc793#section-3.2))   
 
 - 对于丢包重传，也就是当前端（抓包侧），我们可以通过seq id 进行分析，也就是当 seq id 并不是预期的，预期 seq id 应该是我已经发送数据包的id，可以通过上一帧计算所得，当不是的时候，那么就会报错 `Out-Of-Order` ，**并且这里并不会对丢包重传的包进行流量解析**！
 - Window Update 帧，主要是流控，都是由数据接收方进行控制，比如A给B发送需要B进行控制窗口流量大小（和HTTP2很相似）！这里还会有 `TCP Window Full` 表示接受区满了！
@@ -210,8 +209,7 @@ Content-Length: 18
 
 ## Contribute
 
-1. 本人后面会将协议改成 GPL，那么会有更多开发者贡献代码！
-2. 如果想自己实现解析期，只需要实现接口即可！
+1. 如果想自己实现解析期，只需要实现接口即可！
 
 ```go
 type SourceReader interface {

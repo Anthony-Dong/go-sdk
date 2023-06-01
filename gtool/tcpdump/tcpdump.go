@@ -7,20 +7,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anthony-dong/go-sdk/commons/tcpdump"
-
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/spf13/cobra"
 
 	"github.com/anthony-dong/go-sdk/commons"
-)
-
-type MsgType string
-
-const (
-	Thrift MsgType = "thrift"
-	HTTP   MsgType = "http"
+	"github.com/anthony-dong/go-sdk/commons/tcpdump"
 )
 
 func NewCmd() (*cobra.Command, error) {
@@ -29,13 +21,10 @@ func NewCmd() (*cobra.Command, error) {
 		filename string
 	)
 	cmd := &cobra.Command{
-		Use:   `tcpdump [-r file] [-v] [-X] [--max dump size]`,
-		Short: `decode tcpdump file`,
-		Long:  `decode tcpdump file, help doc: https://github.com/Anthony-Dong/go-sdk/tree/master/gtool/tcpdump`,
-		Example: `	1. step1: tcpdump 'port 8080' -w ~/data/tcpdump.pcap
-	   step2: gtool tcpdump -r ~/data/tcpdump.pcap
-	2. tcpdump 'port 8080' -X -l -n | gtool tcpdump
-`,
+		Use:     `tcpdump [-r file] [-v] [-X] [--max dump size]`,
+		Short:   `decode tcpdump file`,
+		Long:    `decode tcpdump file, help doc: https://github.com/Anthony-Dong/go-sdk/tree/master/gtool/tcpdump`,
+		Example: `  tcpdump 'port 8080' -X -l -n | gtool tcpdump`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), filename, cfg)
 		},

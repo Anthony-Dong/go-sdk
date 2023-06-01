@@ -33,39 +33,20 @@ func NewCmd() (*cobra.Command, error) {
 	cmd.AddCommand(newCodecCmd("url", codec.NewCodec(codec.NewUrlCodec())))
 	cmd.AddCommand(newCodecCmd("hex", codec.NewCodec(codec.NewHexCodec())))
 	cmd.AddCommand(newCodecCmd("hexdump", codec.NewCodec(codec.NewHexDumpCodec())))
-	cmd.AddCommand(newCodecCmd("double-quote", codec.NewCodec(bytesCodec{
-		BytesEncoder: codec.NewStringQuoteCodec(),
-		BytesDecoder: nil,
-	})))
-	cmd.AddCommand(newCodecCmd("single-quote", codec.NewCodec(bytesCodec{
-		BytesEncoder: func() codec.BytesEncoder {
-			r := codec.NewStringQuoteCodec()
-			r.QuoteType = codec.SingleQuoteClike
-			return r
-		}(),
-		BytesDecoder: BytesDecoderFunc(func(src []byte) (dst []byte, err error) {
-			if err := cmd.Help(); err != nil {
-				return nil, err
-			}
-			return nil, fmt.Errorf(`not support decode type`)
-		}),
-	})))
 	cmd.AddCommand(newCodecCmd("pb-desc", codec.NewCodec(bytesCodec{
-		BytesEncoder: BytesEncodeFunc(func(src []byte) (dst []byte) {
-			return src
-		}),
+		BytesEncoder: BytesEncodeFunc(func(src []byte) (dst []byte) { return src }),
 		BytesDecoder: codec.NewProtoDesc(),
 	})))
 	return cmd, nil
 }
 
-var (
-	reader   io.Reader = os.Stdin
-	writer   io.Writer = os.Stdout
-	isDecode bool
-)
-
 func newCodecCmd(name string, codec codec.Codec) *cobra.Command {
+	var (
+		reader   io.Reader = os.Stdin
+		writer   io.Writer = os.Stdout
+		isDecode bool
+		isLf     bool
+	)
 	cmd := &cobra.Command{
 		Use:   name,
 		Short: fmt.Sprintf("%s codec", name),
@@ -74,7 +55,7 @@ func newCodecCmd(name string, codec codec.Codec) *cobra.Command {
 				return cmd.Help()
 			}
 			defer func() {
-				if err == nil {
+				if err == nil && isLf {
 					_, _ = writer.Write([]byte{'\n'})
 				}
 			}()
@@ -84,6 +65,7 @@ func newCodecCmd(name string, codec codec.Codec) *cobra.Command {
 			return codec.Encode(reader, writer)
 		},
 	}
+	cmd.PersistentFlags().BoolVar(&isLf, "lf", false, "append lf")
 	cmd.PersistentFlags().BoolVar(&isDecode, "decode", false, "decode content data")
 	return cmd
 }

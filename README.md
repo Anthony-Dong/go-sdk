@@ -1,53 +1,20 @@
-## Go-SDK
+## Gtool
 
-这个是本人写的一个Go通用的SDK, 包含cli 和 common sdk!
+一个功能强大的Cli工具，下载方式: 
 
-## Feature
+- 本地有GO环境，可以直接  `CGO_ENABLED=1 go get -v github.com/anthony-dong/go-sdk/gtool`
+- 也可以可以前往 [https://github.com/Anthony-Dong/go-sdk/releases](https://github.com/Anthony-Dong/go-sdk/releases)  直接下载二进制
+
+## 功能
 - [Codec](./commons/codec) PB/Thrift 以及常见的消息协议
   - [PB Codec](./commons/codec/pb_codec)
   - [Thrift Codec](./commons/codec/thrift_codec)
-- [Commons-Util](./commons): 常见的工具包
-- [Example](./example): 日常练习的代码
-- [CLI](./gtool): 命令行工具
-- [Tcpdump Decoder](./gtool/tcpdump): tcpdump 解析工具
-
-## [Cli](./gtool)
-
-1. 下载
-
-- 可以前往 [https://github.com/Anthony-Dong/go-sdk/releases](https://github.com/Anthony-Dong/go-sdk/releases) 进行下载
-- 源码编译，下载代码， 然后`make install` 即可！
+- [Tcpdump Decoder](./gtool/tcpdump): tcpdump console 解析工具,  你可以非常迅速的抓取thrift packet `tcpdump 'port 8080' -X -l -n | gtool tcpdump`
+- 支持文件上传到阿里云oss
+- 支持hexo博客快速搭建，参考: https://github.com/Anthony-Dong/blog_template
 
 ```shell
-cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/archive/refs/tags/v1.0.5.tar.gz ; tar -zxvf v1.0.5.tar.gz ; cd go-sdk-1.0.5; make ; mv -f ./bin/gtool `go env GOPATH`/bin ; gtool -v
-```
-
-- Linux 升级
-
-```shell
-cd $(mktemp -d) ; wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.5/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; mv ./bin/gtool `go env GOPATH`/bin ; cd - ; gtool -v
-```
-
-- Linux 下载
-
-```shell
-wget https://github.com/Anthony-Dong/go-sdk/releases/download/v1.0.5/gtool-linux-amd64.tgz ; tar -zxvf gtool-linux-amd64.tgz ; bin/gtool -v
-```
-
-- doc: https://pkg.go.dev/github.com/anthony-dong/go-sdk/gtool
-
-2. 文档: [gtool 文档](./gtool)
-3. 功能:
-   - 支持常见的编解码操作，比如`thrift` 和 `protobuf`
-   - 支持文件上传到阿里云oss
-   - 支持hexo博客搭建
-   - 支持json便捷操作
-
-
-4. 使用: 
-
-```shell
-➜  gtool --help
+➜  ~ gtool
 Usage: gtool [OPTIONS] COMMAND
 
 Commands:
@@ -60,7 +27,7 @@ Commands:
   upload      File upload tool
 
 Options:
-      --config-file string   set the config file (default "/home/fanhaodong.516/.gtool.yaml")
+      --config-file string   set the config file (default "/Users/bytedance/.gtool.yaml")
   -h, --help                 help for gtool
       --log-level string     set the log level in "fatal|error|warn|info|debug" (default "debug")
   -v, --version              version for gtool
@@ -68,46 +35,6 @@ Options:
 Use "gtool COMMAND --help" for more information about a command.
 
 To get more help with gtool, check out our guides at https://github.com/Anthony-Dong/go-sdk
-```
-
-5. roadmap
-
-- 支持一键更新最新版本
-
-## Example
-
-1. 下载: `go get -v github.com/anthony-dong/go-sdk@master`
-
-```go
-package main
-
-import (
-	"fmt"
-	"github.com/anthony-dong/go-sdk/commons"
-	"github.com/anthony-dong/go-sdk/commons/bufutils"
-	"github.com/anthony-dong/go-sdk/commons/codec"
-)
-
-func main() {
-	// pool buf
-	buffer := bufutils.NewBuffer()
-	defer bufutils.ResetBuffer(buffer)
-	buffer.WriteString("hello world")
-
-	// file utils
-	filename := commons.MustTmpDir("", "test.log")
-	if err := commons.WriteFile(commons.MustTmpDir("", "test.log"), []byte("hello world")); err != nil {
-		panic(err)
-	}
-	fmt.Println(filename)
-	fmt.Println(commons.GetGoProjectDir())
-
-	// codec sdk
-	fmt.Println(string(codec.NewBase64Codec().Encode(codec.NewSnappyCodec().Encode([]byte("hello world")))))
-
-	// unsafe
-	fmt.Println(commons.UnsafeString(commons.UnsafeBytes("hello world")))
-}
 ```
 
 
